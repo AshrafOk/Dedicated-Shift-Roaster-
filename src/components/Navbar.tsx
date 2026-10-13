@@ -67,52 +67,52 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Zone 2: 4 single-line clean nav links */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1.5">
             <button
               onClick={() => onTabChange('dashboard')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                 currentTab === 'dashboard'
-                  ? 'bg-slate-100 text-slate-900'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/70 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
+              <BarChart3 className={`w-3.5 h-3.5 ${currentTab === 'dashboard' ? 'text-blue-600' : 'text-slate-500'}`} />
               <span>Dashboard</span>
             </button>
 
             <button
               onClick={() => onTabChange('roster')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                 currentTab === 'roster'
-                  ? 'bg-slate-100 text-slate-900'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/70 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <Calendar className={`w-3.5 h-3.5 ${currentTab === 'roster' ? 'text-blue-600' : 'text-slate-500'}`} />
               <span>Shift Roster</span>
             </button>
 
             <button
               onClick={() => onTabChange('balances')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                 currentTab === 'balances'
-                  ? 'bg-slate-100 text-slate-900'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/70 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
+              <Clock className={`w-3.5 h-3.5 ${currentTab === 'balances' ? 'text-blue-600' : 'text-slate-500'}`} />
               <span>Leave Balances</span>
             </button>
 
             <button
               onClick={() => onTabChange('directory')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                 currentTab === 'directory'
-                  ? 'bg-slate-100 text-slate-900'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/70 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Users className="w-3.5 h-3.5 text-slate-500" />
+              <Users className={`w-3.5 h-3.5 ${currentTab === 'directory' ? 'text-blue-600' : 'text-slate-500'}`} />
               <span>Team Directory</span>
             </button>
           </nav>
@@ -125,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 value={month}
                 onChange={(e) => onMonthChange(Number(e.target.value))}
                 aria-label="Select active month of 2026"
-                className="px-2 py-1 text-xs font-bold text-indigo-700 bg-white rounded border-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer tabular-nums shadow-2xs"
+                className="px-2 py-1 text-xs font-bold text-blue-700 bg-white rounded border-none focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer tabular-nums shadow-2xs"
               >
                 {MONTH_OPTIONS.map((m) => (
                   <option key={m.val} value={m.val}>
@@ -159,7 +159,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Primary Action Button */}
             <button
               onClick={onOpenLogModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-xs whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-xs whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Log Leave/Shift</span>

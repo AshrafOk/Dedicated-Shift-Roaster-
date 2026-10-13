@@ -58,13 +58,13 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
         {/* Header */}
         <div className="px-6 py-5 bg-slate-900 text-white flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500 flex items-center justify-center text-white text-xl font-bold">
+            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl font-bold shadow-xs">
               {employee.name.charAt(0)}
             </div>
             <div>
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold">{employee.name}</h2>
-                <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-slate-800 text-indigo-300">
+                <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-slate-800 text-blue-300">
                   EMP ID: {employee.empId}
                 </span>
               </div>
@@ -81,7 +81,7 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onOpenLogLeave(employee.empId)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Log Leave</span>

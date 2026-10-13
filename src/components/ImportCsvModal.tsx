@@ -83,7 +83,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
             <label className="block font-bold text-slate-700 mb-1.5">
               Upload CSV File
             </label>
-            <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-indigo-500 transition-colors bg-slate-50">
+            <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-blue-500 transition-colors bg-slate-50">
               <input
                 type="file"
                 accept=".csv,text/csv"
@@ -95,8 +95,8 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
                 htmlFor="csvFileInput"
                 className="cursor-pointer flex flex-col items-center justify-center gap-1.5"
               >
-                <Upload className="w-6 h-6 text-indigo-600" />
-                <span className="font-semibold text-indigo-600 hover:underline">
+                <Upload className="w-6 h-6 text-blue-600" />
+                <span className="font-semibold text-blue-600 hover:underline">
                   Click to select CSV file from computer
                 </span>
                 <span className="text-[11px] text-slate-400">
@@ -121,7 +121,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
                   tryParse(e.target.value);
                 }
               }}
-              className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-white"
+              className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white"
             />
           </div>
 
@@ -157,7 +157,7 @@ export const ImportCsvModal: React.FC<ImportCsvModalProps> = ({
             <button
               onClick={handleApply}
               disabled={!previewInfo}
-              className="px-5 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 rounded-lg shadow-sm transition-colors"
+              className="px-5 py-2 font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:hover:bg-blue-600 rounded-lg shadow-sm transition-colors"
             >
               Sync &amp; Update Database
             </button>

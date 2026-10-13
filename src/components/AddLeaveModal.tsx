@@ -96,7 +96,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
             <select
               value={empId}
               onChange={(e) => setEmpId(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               {employees.map((e) => (
                 <option key={e.empId} value={e.empId}>
@@ -117,7 +117,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
                 onClick={() => setEntryType('leave')}
                 className={`py-1.5 font-bold rounded-md transition-colors ${
                   entryType === 'leave'
-                    ? 'bg-white text-indigo-700 shadow-xs'
+                    ? 'bg-white text-blue-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -128,7 +128,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
                 onClick={() => setEntryType('shift')}
                 className={`py-1.5 font-bold rounded-md transition-colors ${
                   entryType === 'shift'
-                    ? 'bg-white text-indigo-700 shadow-xs'
+                    ? 'bg-white text-blue-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -139,7 +139,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
                 onClick={() => setEntryType('week_off')}
                 className={`py-1.5 font-bold rounded-md transition-colors ${
                   entryType === 'week_off'
-                    ? 'bg-white text-indigo-700 shadow-xs'
+                    ? 'bg-white text-blue-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -162,7 +162,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
                     onClick={() => setLeaveCode(l.code)}
                     className={`p-2 rounded-lg border text-center transition-all ${
                       leaveCode === l.code
-                        ? 'ring-2 ring-indigo-600 shadow-xs scale-102 font-bold'
+                        ? 'ring-2 ring-blue-600 shadow-xs scale-102 font-bold'
                         : 'opacity-85'
                     } ${l.bgColor} ${l.textColor} ${l.borderColor}`}
                   >
@@ -188,7 +188,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
                     onClick={() => setShiftCode(s.code)}
                     className={`p-2 rounded-lg border text-left transition-all ${
                       shiftCode === s.code
-                        ? 'bg-indigo-50 border-indigo-600 ring-1 ring-indigo-600'
+                        ? 'bg-blue-50 border-blue-600 ring-1 ring-blue-600'
                         : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -241,7 +241,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
             </div>
           </div>
 
-          <div className="text-xs text-indigo-700 bg-indigo-50 p-2.5 rounded-lg font-medium flex items-center justify-between">
+          <div className="text-xs text-blue-700 bg-blue-50 p-2.5 rounded-lg font-medium flex items-center justify-between">
             <span>Duration:</span>
             <span className="font-bold font-mono">{daysCount} Day(s) Selected</span>
           </div>
@@ -254,7 +254,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
                 id="updateQuota"
                 checked={updateQuota}
                 onChange={(e) => setUpdateQuota(e.target.checked)}
-                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
               />
               <label htmlFor="updateQuota" className="font-semibold text-slate-700 cursor-pointer">
                 Auto-update consumed counter in {year} Leave Balances table (+{daysCount} {leaveCode})
@@ -272,7 +272,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
               placeholder="e.g., Vacation trip, Medical recovery, Emergency..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
@@ -287,7 +287,7 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors"
+              className="px-5 py-2 font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-sm transition-colors"
             >
               Apply to Roster
             </button>

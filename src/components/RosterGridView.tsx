@@ -159,7 +159,7 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
                 placeholder="Search name or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition-all"
               />
             </div>
 
@@ -294,7 +294,7 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
                     <td className="sticky left-0 z-10 bg-white hover:bg-slate-50 px-3 py-1.5 border-r border-slate-200 font-sans shadow-xs whitespace-nowrap">
                       <button
                         onClick={() => onSelectEmployee(row.empId)}
-                        className="text-left font-semibold text-slate-900 hover:text-indigo-600 transition-colors flex items-center gap-1.5 group"
+                        className="text-left font-semibold text-slate-900 hover:text-blue-600 transition-colors flex items-center gap-1.5 group"
                       >
                         <span className="truncate max-w-[140px]">{row.name}</span>
                       </button>
@@ -315,7 +315,7 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
                         <td
                           key={day}
                           onClick={() => handleCellClick(row.empId, day, val, row.name)}
-                          className={`px-1 py-1.5 text-center border-r border-slate-200 cursor-pointer select-none transition-all hover:ring-2 hover:ring-indigo-500 hover:z-10 ${
+                          className={`px-1 py-1.5 text-center border-r border-slate-200 cursor-pointer select-none transition-all hover:ring-2 hover:ring-blue-500 hover:z-10 ${
                             weekend && !style.isLeave && val !== 'W' ? 'bg-blue-50/30' : ''
                           }`}
                           title={`${row.name} · Day ${day} (${getDayOfWeekName(year, month, day)}): ${style.label || val}`}
@@ -349,7 +349,7 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
         {/* Abbreviations Table */}
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <HelpCircle className="w-4 h-4 text-indigo-600" />
+            <HelpCircle className="w-4 h-4 text-blue-600" />
             <h3 className="text-sm font-bold text-slate-900">
               Roster Abbreviations &amp; Leave Legend
             </h3>
@@ -379,7 +379,7 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
         {/* Shift Category Table */}
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <Clock className="w-4 h-4 text-indigo-600" />
+            <Clock className="w-4 h-4 text-blue-600" />
             <h3 className="text-sm font-bold text-slate-900">
               Shift Categories &amp; Operational Timings (IST)
             </h3>
@@ -444,7 +444,7 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
                       onClick={() => handleSelectCellValue(s.code)}
                       className={`flex flex-col items-center justify-center p-2 rounded-lg border text-xs font-bold transition-all ${
                         editingCell.currentVal === s.code
-                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
                           : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800'
                       }`}
                     >
@@ -469,7 +469,7 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
                       onClick={() => handleSelectCellValue(l.code)}
                       className={`flex flex-col items-center justify-center p-2 rounded-lg border text-xs font-bold transition-all ${
                         editingCell.currentVal === l.code
-                          ? 'ring-2 ring-indigo-600 shadow-xs'
+                          ? 'ring-2 ring-blue-600 shadow-xs'
                           : 'hover:opacity-90'
                       } ${l.bgColor} ${l.textColor} ${l.borderColor}`}
                     >

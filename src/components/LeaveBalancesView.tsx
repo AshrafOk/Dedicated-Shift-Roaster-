@@ -124,7 +124,7 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                 placeholder="Search employee or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-white"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white"
               />
             </div>
 
@@ -144,7 +144,7 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                 onClick={() => setFilterType('negative_co')}
                 className={`px-2.5 py-1 text-xs font-semibold rounded-md whitespace-nowrap ${
                   filterType === 'negative_co'
-                    ? 'bg-white text-rose-700 shadow-xs'
+                    ? 'bg-white text-blue-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -164,7 +164,7 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                 onClick={() => setFilterType('high_consumer')}
                 className={`px-2.5 py-1 text-xs font-semibold rounded-md whitespace-nowrap ${
                   filterType === 'high_consumer'
-                    ? 'bg-white text-indigo-700 shadow-xs'
+                    ? 'bg-white text-blue-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -206,7 +206,7 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                 <th colSpan={4} className="bg-emerald-100 text-emerald-950 px-3 py-1.5 border-r border-emerald-200">
                   Comp Off (CO / Time in Lieu)
                 </th>
-                <th colSpan={2} className="bg-indigo-100 text-indigo-950 px-3 py-1.5 border-r border-indigo-200">
+                <th colSpan={2} className="bg-blue-100 text-blue-950 px-3 py-1.5 border-r border-blue-200">
                   Totals
                 </th>
                 <th className="bg-slate-200 px-3 py-1.5">
@@ -298,12 +298,12 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                 </th>
 
                 {/* Totals */}
-                <th className="px-2 py-2 font-bold text-center border-r border-indigo-100 bg-indigo-50/50 min-w-[65px]">
+                <th className="px-2 py-2 font-bold text-center border-r border-blue-100 bg-blue-50/50 min-w-[65px]">
                   PH Used
                 </th>
                 <th
                   onClick={() => handleSort('totalLeaveTaken')}
-                  className="px-2 py-2 font-bold text-center border-r border-indigo-200 bg-indigo-100 text-indigo-950 cursor-pointer hover:bg-indigo-200 min-w-[75px]"
+                  className="px-2 py-2 font-bold text-center border-r border-blue-200 bg-blue-100 text-blue-950 cursor-pointer hover:bg-blue-200 min-w-[75px]"
                 >
                   Total Leave
                 </th>
@@ -324,14 +324,14 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                   <tr
                     key={b.empId}
                     className={`hover:bg-slate-50/80 transition-colors ${
-                      isEditing ? 'bg-indigo-50/40 ring-1 ring-indigo-400' : ''
+                      isEditing ? 'bg-blue-50/40 ring-1 ring-blue-400' : ''
                     }`}
                   >
                     {/* Name */}
                     <td className="px-3 py-2 font-sans font-semibold text-slate-900 border-r border-slate-200 whitespace-nowrap">
                       <button
                         onClick={() => onSelectEmployee(b.empId)}
-                        className="hover:text-indigo-600 transition-colors text-left"
+                        className="hover:text-blue-600 transition-colors text-left"
                       >
                         {b.name}
                       </button>
@@ -524,14 +524,14 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                     </td>
 
                     {/* PH Consumed */}
-                    <td className="px-2 py-1.5 text-center border-r border-slate-200 bg-indigo-50/30 tabular-nums">
+                    <td className="px-2 py-1.5 text-center border-r border-slate-200 bg-blue-50/30 tabular-nums">
                       {isEditing ? (
                         <input
                           type="number"
                           step="1"
                           value={currentData.phConsumed}
                           onChange={(e) => handleFieldChange('phConsumed', Number(e.target.value))}
-                          className="w-14 px-1 py-0.5 text-center bg-white border border-indigo-300 rounded focus:ring-1 focus:ring-indigo-500"
+                          className="w-14 px-1 py-0.5 text-center bg-white border border-blue-300 rounded focus:ring-1 focus:ring-blue-500"
                         />
                       ) : (
                         b.phConsumed
@@ -539,7 +539,7 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                     </td>
 
                     {/* Total Leave Taken */}
-                    <td className="px-2 py-2 text-center border-r border-indigo-200 bg-indigo-100/70 font-bold text-indigo-950 tabular-nums">
+                    <td className="px-2 py-2 text-center border-r border-blue-200 bg-blue-100/70 font-bold text-blue-950 tabular-nums">
                       {currentData.totalLeaveTaken}
                     </td>
 

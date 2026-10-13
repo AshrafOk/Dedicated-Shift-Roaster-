@@ -202,7 +202,7 @@ export default function App() {
   const selectedEmployeeRoster = rosterRows.find((r) => r.empId === selectedEmpId);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50/70 via-slate-50 to-blue-50/50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Navbar with 3-Zone Top Bar Contract, Month Selector, and CSV Database Tools */}
       <Navbar
         currentTab={currentTab}
@@ -227,6 +227,8 @@ export default function App() {
             onSelectEmployee={(empId) => setSelectedEmpId(empId)}
             onNavigateToRoster={() => setCurrentTab('roster')}
             onNavigateToBalances={() => setCurrentTab('balances')}
+            db={db}
+            onMonthChange={setMonth}
           />
         )}
 

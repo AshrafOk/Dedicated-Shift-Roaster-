@@ -66,7 +66,7 @@ export const EmployeeDirectoryView: React.FC<EmployeeDirectoryViewProps> = ({
                 placeholder="Search name, ID, joining date..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-white"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white"
               />
             </div>
 
@@ -75,7 +75,7 @@ export const EmployeeDirectoryView: React.FC<EmployeeDirectoryViewProps> = ({
               value={shiftFilter}
               onChange={(e) => setShiftFilter(e.target.value)}
               aria-label="Filter by assigned shift"
-              className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option value="all">All Shifts</option>
               <option value="23">Shift 23 (6pm – 3am)</option>
@@ -107,7 +107,7 @@ export const EmployeeDirectoryView: React.FC<EmployeeDirectoryViewProps> = ({
                   <div>
                     <h3
                       onClick={() => onSelectEmployee(emp.empId)}
-                      className="text-base font-bold text-slate-900 hover:text-indigo-600 transition-colors cursor-pointer"
+                      className="text-base font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer"
                     >
                       {emp.name}
                     </h3>
@@ -206,7 +206,7 @@ export const EmployeeDirectoryView: React.FC<EmployeeDirectoryViewProps> = ({
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <button
                   onClick={() => onSelectEmployee(emp.empId)}
-                  className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                  className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
                 >
                   <span>Individual Details</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
