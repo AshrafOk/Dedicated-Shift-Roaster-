@@ -1,0 +1,6 @@
+{
+  "name": "RosterPulse - Shift & Leave Management",
+  "description": "Enterprise resource shift roster schedule, attendance tracking, and 2026 leave quota dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
