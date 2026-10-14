@@ -9,6 +9,7 @@ import {
   EmployeeLeaveBalance,
   EmployeeRosterRow,
   ViewTab,
+  UserRole,
 } from './types/roster';
 import {
   loadDatabase,
@@ -27,6 +28,10 @@ import { EmployeeDirectoryView } from './components/EmployeeDirectoryView';
 import { EmployeeDetailModal } from './components/EmployeeDetailModal';
 import { AddLeaveModal } from './components/AddLeaveModal';
 import { ImportCsvModal } from './components/ImportCsvModal';
+import { AdminAuthModal } from './components/AdminAuthModal';
+import { AppPasswordGate } from './components/AppPasswordGate';
+import { AdminPasswordSettingsModal } from './components/AdminPasswordSettingsModal';
+import { isAppAuthenticated, setAppAuthenticated } from './utils/authUtils';
 
 const MONTH_NAMES = [
   'January',
@@ -44,10 +49,18 @@ const MONTH_NAMES = [
 ];
 
 export default function App() {
+  // Gatekeeper: App Entrance Password required for anyone opening the app (default: Noc@Roster2026)
+  const [isAppUnlocked, setIsAppUnlocked] = useState<boolean>(() => isAppAuthenticated());
+
   const [year] = useState<number>(2026);
   // Default to October 2026, or user can toggle to any month (1-12)
   const [month, setMonth] = useState<number>(10);
   const [currentTab, setCurrentTab] = useState<ViewTab>('dashboard');
+
+  // User Role State: Default to 'viewer' (Read-Only) to demonstrate viewer protection; user can click Unlock Admin
+  const [userRole, setUserRole] = useState<UserRole>('viewer');
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
+  const [isPasswordSettingsOpen, setIsPasswordSettingsOpen] = useState<boolean>(false);
 
   // Master Database State (Holds all 365 days of schedules and leave balances for all 28 employees)
   const [db, setDb] = useState<DatabaseState>(() => loadDatabase());
@@ -80,6 +93,10 @@ export default function App() {
 
   // 1. Update single day cell in database
   const handleUpdateCell = (empId: string, day: number, value: CellValue) => {
+    if (userRole === 'viewer') {
+      setIsAdminModalOpen(true);
+      return;
+    }
     const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const newSchedules = {
       ...db.dailySchedules,
@@ -101,6 +118,10 @@ export default function App() {
 
   // 2. Update employee leave balance quota
   const handleUpdateBalance = (empId: string, updated: EmployeeLeaveBalance) => {
+    if (userRole === 'viewer') {
+      setIsAdminModalOpen(true);
+      return;
+    }
     const recomputed = calculateEmployeeBalance(updated);
     const newBalances = db.balances.map((b) => (b.empId === empId ? recomputed : b));
 
@@ -116,6 +137,10 @@ export default function App() {
 
   // 3. Reset database to master CSV
   const handleResetToMaster = () => {
+    if (userRole === 'viewer') {
+      setIsAdminModalOpen(true);
+      return;
+    }
     if (
       window.confirm(
         'Reset the entire database back to the official Kaseya NOC master CSV data?'
@@ -141,6 +166,10 @@ export default function App() {
     value: CellValue;
     updateQuota: boolean;
   }) => {
+    if (userRole === 'viewer') {
+      setIsAdminModalOpen(true);
+      return;
+    }
     const newEmpSchedule = { ...(db.dailySchedules[empId] || {}) };
     for (let d = startDay; d <= endDay; d++) {
       const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -184,6 +213,10 @@ export default function App() {
 
   // 5. Apply newly imported CSV
   const handleImportSuccess = (importedState: DatabaseState) => {
+    if (userRole === 'viewer') {
+      setIsAdminModalOpen(true);
+      return;
+    }
     setDb(importedState);
     saveDatabase(importedState);
     showToast(
@@ -192,6 +225,10 @@ export default function App() {
   };
 
   const handleOpenAddModal = (targetEmpId?: string) => {
+    if (userRole === 'viewer') {
+      setIsAdminModalOpen(true);
+      return;
+    }
     setAddModalPreselectedEmpId(targetEmpId);
     setIsAddModalOpen(true);
   };
@@ -200,6 +237,26 @@ export default function App() {
 
   const selectedEmployeeBalance = balances.find((b) => b.empId === selectedEmpId);
   const selectedEmployeeRoster = rosterRows.find((r) => r.empId === selectedEmpId);
+
+  // If the app has not been unlocked with the app password, render the AppPasswordGate
+  if (!isAppUnlocked) {
+    return (
+      <>
+        <AppPasswordGate
+          onUnlockSuccess={() => {
+            setIsAppUnlocked(true);
+            showToast('Access granted: Welcome to Kaseya NOC Portal.');
+          }}
+        />
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-lg shadow-xl border border-slate-700 animate-in slide-in-from-bottom-3 duration-200 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/70 via-slate-50 to-blue-50/50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
@@ -211,8 +268,28 @@ export default function App() {
         year={year}
         month={month}
         onMonthChange={setMonth}
-        onOpenImportModal={() => setIsImportModalOpen(true)}
-        onExportMasterCsv={() => exportDatabaseToCSV(db, year)}
+        onOpenImportModal={() => {
+          if (userRole === 'viewer') {
+            setIsAdminModalOpen(true);
+          } else {
+            setIsImportModalOpen(true);
+          }
+        }}
+        onExportMasterCsv={() => {
+          if (userRole === 'viewer') {
+            setIsAdminModalOpen(true);
+            return;
+          }
+          exportDatabaseToCSV(db, year);
+        }}
+        userRole={userRole}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        onOpenPasswordSettings={() => setIsPasswordSettingsOpen(true)}
+        onLockApp={() => {
+          setAppAuthenticated(false);
+          setIsAppUnlocked(false);
+          showToast('Portal locked. App password required to re-enter.');
+        }}
       />
 
       {/* Main View Area */}
@@ -229,6 +306,8 @@ export default function App() {
             onNavigateToBalances={() => setCurrentTab('balances')}
             db={db}
             onMonthChange={setMonth}
+            userRole={userRole}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
           />
         )}
 
@@ -242,6 +321,8 @@ export default function App() {
             onResetRoster={handleResetToMaster}
             onSelectEmployee={(empId) => setSelectedEmpId(empId)}
             onMonthChange={setMonth}
+            userRole={userRole}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
           />
         )}
 
@@ -252,6 +333,8 @@ export default function App() {
             onUpdateBalance={handleUpdateBalance}
             onSelectEmployee={(empId) => setSelectedEmpId(empId)}
             onOpenLogModal={handleOpenAddModal}
+            userRole={userRole}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
           />
         )}
 
@@ -262,6 +345,8 @@ export default function App() {
             year={year}
             onSelectEmployee={(empId) => setSelectedEmpId(empId)}
             onOpenLogLeave={handleOpenAddModal}
+            userRole={userRole}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
           />
         )}
       </main>
@@ -277,6 +362,8 @@ export default function App() {
           onClose={() => setSelectedEmpId(null)}
           onOpenLogLeave={(empId) => handleOpenAddModal(empId)}
           onUpdateDayCell={handleUpdateCell}
+          userRole={userRole}
+          onOpenAdminModal={() => setIsAdminModalOpen(true)}
         />
       )}
 
@@ -300,6 +387,23 @@ export default function App() {
           onImportSuccess={handleImportSuccess}
         />
       )}
+
+      {/* Admin Verification & Role Switcher Modal */}
+      <AdminAuthModal
+        currentRole={userRole}
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onRoleChange={setUserRole}
+        onShowToast={showToast}
+        onOpenPasswordSettings={() => setIsPasswordSettingsOpen(true)}
+      />
+
+      {/* Admin Password Management Modal (Only Admin can change App Password and Admin Password) */}
+      <AdminPasswordSettingsModal
+        isOpen={isPasswordSettingsOpen}
+        onClose={() => setIsPasswordSettingsOpen(false)}
+        onShowToast={showToast}
+      />
 
       {/* Toast Notification */}
       {toastMessage && (

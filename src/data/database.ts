@@ -17,19 +17,22 @@ export interface DatabaseState {
 const DB_STORAGE_KEY = 'kaseya_noc_database_2026_master_v3';
 
 // Parse raw CSV into DatabaseState
-export function parseRosterCsv(csvText: string): DatabaseState {
+// Parse raw CSV into DatabaseState (optionally merging into an existing database)
+export function parseRosterCsv(csvText: string, mergeIntoDb?: DatabaseState): DatabaseState {
   const lines = csvText.trim().split(/\r?\n/);
   if (lines.length < 2) {
     throw new Error('CSV has insufficient rows');
   }
 
   const header = parseCsvLine(lines[0]);
-  // Date columns start at index 19 (e.g., 1/1/2026)
+  // Date columns start at index 19 (e.g., 1/1/2026, 11/1/2026, or 2026-11-01)
   const dateColumns: { index: number; rawDate: string; month: number; day: number; year: number }[] = [];
 
   for (let colIdx = 19; colIdx < header.length; colIdx++) {
     const raw = header[colIdx].trim();
-    if (raw && raw.includes('/')) {
+    if (!raw) continue;
+
+    if (raw.includes('/')) {
       const parts = raw.split('/');
       if (parts.length === 3) {
         const m = parseInt(parts[0], 10);
@@ -45,11 +48,35 @@ export function parseRosterCsv(csvText: string): DatabaseState {
           });
         }
       }
+    } else if (raw.includes('-')) {
+      const parts = raw.split('-');
+      if (parts.length === 3) {
+        let y = parseInt(parts[0], 10);
+        let m = parseInt(parts[1], 10);
+        let d = parseInt(parts[2], 10);
+        if (parts[0].length === 2 && parts[2].length === 4) {
+          // DD-MM-YYYY
+          d = parseInt(parts[0], 10);
+          m = parseInt(parts[1], 10);
+          y = parseInt(parts[2], 10);
+        }
+        if (!isNaN(m) && !isNaN(d) && !isNaN(y)) {
+          dateColumns.push({
+            index: colIdx,
+            rawDate: raw,
+            month: m,
+            day: d,
+            year: y,
+          });
+        }
+      }
     }
   }
 
-  const balances: EmployeeLeaveBalance[] = [];
-  const dailySchedules: Record<string, Record<string, string>> = {};
+  const balances: EmployeeLeaveBalance[] = mergeIntoDb ? [...mergeIntoDb.balances] : [];
+  const dailySchedules: Record<string, Record<string, string>> = mergeIntoDb
+    ? JSON.parse(JSON.stringify(mergeIntoDb.dailySchedules || {}))
+    : {};
 
   for (let rowIdx = 1; rowIdx < lines.length; rowIdx++) {
     const line = lines[rowIdx].trim();
@@ -59,8 +86,8 @@ export function parseRosterCsv(csvText: string): DatabaseState {
     const name = (row[0] || '').trim();
     const empId = (row[1] || '').trim();
 
-    // Skip legend lines (e.g. Abreviations, Shifts, etc.)
-    if (!name || !empId || isNaN(Number(empId)) && !['1262', '1313', '1446'].includes(empId)) {
+    // Skip legend lines (e.g. Abbreviations, Shifts, etc.)
+    if (!name || !empId || (isNaN(Number(empId)) && !['1262', '1313', '1446'].includes(empId))) {
       continue;
     }
 
@@ -109,10 +136,15 @@ export function parseRosterCsv(csvText: string): DatabaseState {
       totalLeaveTaken,
     });
 
-    balances.push(empBalance);
+    const existingIdx = balances.findIndex((b) => b.empId === empId);
+    if (existingIdx >= 0) {
+      balances[existingIdx] = empBalance;
+    } else {
+      balances.push(empBalance);
+    }
 
-    // Parse date cells
-    const empSchedule: Record<string, string> = {};
+    // Parse date cells and merge into employee's schedule
+    const empSchedule: Record<string, string> = dailySchedules[empId] || {};
     dateColumns.forEach((dc) => {
       const cellVal = (row[dc.index] || '').trim();
       const dateKey = `${dc.year}-${String(dc.month).padStart(2, '0')}-${String(dc.day).padStart(2, '0')}`;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { EmployeeLeaveBalance, EmployeeRosterRow } from '../types/roster';
+import { EmployeeLeaveBalance, EmployeeRosterRow, UserRole } from '../types/roster';
 import { SHIFT_DEFINITIONS } from '../data/initialData';
 import {
   Search,
@@ -10,6 +10,7 @@ import {
   Plus,
   Clock,
   Filter,
+  Lock,
 } from 'lucide-react';
 
 interface EmployeeDirectoryViewProps {
@@ -18,6 +19,8 @@ interface EmployeeDirectoryViewProps {
   year: number;
   onSelectEmployee: (empId: string) => void;
   onOpenLogLeave: (empId: string) => void;
+  userRole?: UserRole;
+  onOpenAdminModal?: () => void;
 }
 
 export const EmployeeDirectoryView: React.FC<EmployeeDirectoryViewProps> = ({
@@ -26,6 +29,8 @@ export const EmployeeDirectoryView: React.FC<EmployeeDirectoryViewProps> = ({
   year,
   onSelectEmployee,
   onOpenLogLeave,
+  userRole = 'viewer',
+  onOpenAdminModal,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [shiftFilter, setShiftFilter] = useState('all');
@@ -212,13 +217,24 @@ export const EmployeeDirectoryView: React.FC<EmployeeDirectoryViewProps> = ({
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
 
-                <button
-                  onClick={() => onOpenLogLeave(emp.empId)}
-                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Log Leave</span>
-                </button>
+                {userRole === 'admin' ? (
+                  <button
+                    onClick={() => onOpenLogLeave(emp.empId)}
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Log Leave</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={onOpenAdminModal}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-400 bg-slate-50 border border-slate-200 rounded-md hover:bg-amber-50 hover:text-amber-800 transition-colors"
+                    title="Admin only: Unlock to log leave"
+                  >
+                    <Lock className="w-3 h-3 text-amber-600" />
+                    <span>Locked</span>
+                  </button>
+                )}
               </div>
             </div>
           );

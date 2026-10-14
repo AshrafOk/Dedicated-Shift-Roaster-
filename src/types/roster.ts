@@ -2,6 +2,8 @@ export type ShiftCode = '1' | '2' | '3' | '23' | '12' | '4';
 
 export type LeaveCode = 'PH' | 'PL' | 'W' | 'SL' | 'CO' | 'CL' | 'Paternity' | 'ML' | 'LWD';
 
+export type UserRole = 'admin' | 'viewer';
+
 export type CellValue = ShiftCode | LeaveCode | string;
 
 export interface ShiftDefinition {

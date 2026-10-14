@@ -4,6 +4,7 @@ import {
   EmployeeRosterRow,
   CellValue,
   LeaveCode,
+  UserRole,
 } from '../types/roster';
 import { SHIFT_DEFINITIONS, LEAVE_DEFINITIONS } from '../data/initialData';
 import {
@@ -22,6 +23,7 @@ import {
   Plus,
   CheckCircle2,
   CalendarDays,
+  Lock,
 } from 'lucide-react';
 
 interface EmployeeDetailModalProps {
@@ -33,6 +35,8 @@ interface EmployeeDetailModalProps {
   onClose: () => void;
   onOpenLogLeave: (empId: string) => void;
   onUpdateDayCell: (empId: string, day: number, value: CellValue) => void;
+  userRole?: UserRole;
+  onOpenAdminModal?: () => void;
 }
 
 export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
@@ -44,6 +48,8 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
   onClose,
   onOpenLogLeave,
   onUpdateDayCell,
+  userRole = 'viewer',
+  onOpenAdminModal,
 }) => {
   const [selectedDayToEdit, setSelectedDayToEdit] = useState<number | null>(null);
 
@@ -79,13 +85,24 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => onOpenLogLeave(employee.empId)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Log Leave</span>
-            </button>
+            {userRole === 'admin' ? (
+              <button
+                onClick={() => onOpenLogLeave(employee.empId)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Log Leave</span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenAdminModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 rounded-lg hover:bg-slate-700 transition-colors shadow-xs"
+                title="Admin only: Unlock to log leave"
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Unlock to Edit</span>
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
@@ -253,7 +270,9 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                 </h4>
               </div>
               <span className="text-xs text-slate-500">
-                Click any day to update shift or mark leave
+                {userRole === 'admin'
+                  ? 'Click any day to update shift or mark leave'
+                  : 'Read-Only Calendar: Admin permission required to edit days'}
               </span>
             </div>
 
@@ -282,12 +301,27 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                 return (
                   <div
                     key={day}
-                    onClick={() => setSelectedDayToEdit(day)}
-                    className={`p-2 min-h-[60px] rounded-lg border transition-all cursor-pointer flex flex-col justify-between hover:shadow-xs hover:border-indigo-400 ${
+                    onClick={() => {
+                      if (userRole !== 'admin') {
+                        if (onOpenAdminModal) onOpenAdminModal();
+                        return;
+                      }
+                      setSelectedDayToEdit(day);
+                    }}
+                    className={`p-2 min-h-[60px] rounded-lg border transition-all flex flex-col justify-between ${
+                      userRole === 'admin'
+                        ? 'cursor-pointer hover:shadow-xs hover:border-indigo-400'
+                        : 'cursor-not-allowed hover:bg-amber-50/50'
+                    } ${
                       weekend && !style.isLeave && val !== 'W'
                         ? 'bg-blue-50/40 border-blue-200'
                         : 'bg-white border-slate-200'
                     }`}
+                    title={
+                      userRole === 'admin'
+                        ? `Click to edit Day ${day}`
+                        : `Day ${day}: ${val} (Read-Only · Admin required to edit)`
+                    }
                   >
                     <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
                       <span>{day}</span>

@@ -3,6 +3,7 @@ import {
   EmployeeLeaveBalance,
   EmployeeRosterRow,
   ShiftCode,
+  UserRole,
 } from '../types/roster';
 import { DatabaseState } from '../data/database';
 import { SHIFT_DEFINITIONS, LEAVE_DEFINITIONS } from '../data/initialData';
@@ -39,6 +40,7 @@ import {
   Printer,
   Maximize2,
   FileText,
+  Lock,
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -52,6 +54,8 @@ interface DashboardViewProps {
   onNavigateToBalances: () => void;
   db?: DatabaseState;
   onMonthChange?: (month: number) => void;
+  userRole?: UserRole;
+  onOpenAdminModal?: () => void;
 }
 
 const MONTH_NAMES_SHORT = [
@@ -80,6 +84,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToBalances,
   db,
   onMonthChange,
+  userRole = 'viewer',
+  onOpenAdminModal,
 }) => {
   const daysInMonth = getDaysInMonth(year, month);
   const [selectedDay, setSelectedDay] = useState<number>(1);
@@ -322,12 +328,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             <button
-              onClick={() => window.print()}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-white bg-blue-800/90 hover:bg-blue-800 border border-blue-700/80 rounded-xl transition-all shadow-sm active:scale-98 whitespace-nowrap"
-              title="Generate and print PDF executive roster report for the current month"
+              onClick={userRole === 'admin' ? () => window.print() : onOpenAdminModal}
+              disabled={userRole !== 'admin'}
+              className={`flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm whitespace-nowrap ${
+                userRole === 'admin'
+                  ? 'text-white bg-blue-800/90 hover:bg-blue-800 border border-blue-700/80 active:scale-98 cursor-pointer'
+                  : 'text-blue-200/60 bg-blue-950/60 border border-blue-900/60 cursor-not-allowed opacity-60'
+              }`}
+              title={
+                userRole === 'admin'
+                  ? 'Generate and print PDF executive roster report for the current month'
+                  : 'Export PDF Report is disabled in Read-Only mode. Admin access required.'
+              }
             >
-              <Printer className="w-3.5 h-3.5 text-blue-300" />
+              {userRole === 'admin' ? (
+                <Printer className="w-3.5 h-3.5 text-blue-300" />
+              ) : (
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+              )}
               <span>Export PDF Report</span>
+              {userRole !== 'admin' && (
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-mono font-medium">
+                  Admin Only
+                </span>
+              )}
             </button>
 
             <button

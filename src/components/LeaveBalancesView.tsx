@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { EmployeeLeaveBalance } from '../types/roster';
+import { EmployeeLeaveBalance, UserRole } from '../types/roster';
 import { exportBalancesToCSV, calculateEmployeeBalance } from '../utils/rosterUtils';
 import {
   Search,
@@ -12,6 +12,8 @@ import {
   PlusCircle,
   HelpCircle,
   ArrowUpDown,
+  Lock,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface LeaveBalancesViewProps {
@@ -20,6 +22,8 @@ interface LeaveBalancesViewProps {
   onUpdateBalance: (empId: string, updated: EmployeeLeaveBalance) => void;
   onSelectEmployee: (empId: string) => void;
   onOpenLogModal: (empId?: string) => void;
+  userRole?: UserRole;
+  onOpenAdminModal?: () => void;
 }
 
 export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
@@ -28,6 +32,8 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
   onUpdateBalance,
   onSelectEmployee,
   onOpenLogModal,
+  userRole = 'admin',
+  onOpenAdminModal,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'negative_co' | 'low_pl' | 'high_consumer'>('all');
@@ -39,6 +45,10 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
   const [editFormData, setEditFormData] = useState<EmployeeLeaveBalance | null>(null);
 
   const startEdit = (emp: EmployeeLeaveBalance) => {
+    if (userRole === 'viewer') {
+      if (onOpenAdminModal) onOpenAdminModal();
+      return;
+    }
     setEditingEmpId(emp.empId);
     setEditFormData({ ...emp });
   };
@@ -174,10 +184,24 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
 
             {/* Actions */}
             <button
-              onClick={() => exportBalancesToCSV(year, balances)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-xs whitespace-nowrap"
+              onClick={userRole === 'admin' ? () => exportBalancesToCSV(year, balances) : onOpenAdminModal}
+              disabled={userRole !== 'admin'}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors shadow-xs whitespace-nowrap ${
+                userRole === 'admin'
+                  ? 'text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer'
+                  : 'text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed opacity-60'
+              }`}
+              title={
+                userRole === 'admin'
+                  ? 'Download leave balances CSV'
+                  : 'Export is disabled in Read-Only mode. Admin access required.'
+              }
             >
-              <Download className="w-3.5 h-3.5" />
+              {userRole === 'admin' ? (
+                <Download className="w-3.5 h-3.5" />
+              ) : (
+                <Lock className="w-3.5 h-3.5 text-amber-600" />
+              )}
               <span>Export CSV</span>
             </button>
           </div>
@@ -562,12 +586,21 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      ) : (
+                      ) : userRole === 'admin' ? (
                         <button
                           onClick={() => startEdit(b)}
                           className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-sans font-medium text-[11px] transition-colors"
                         >
                           Edit
+                        </button>
+                      ) : (
+                        <button
+                          onClick={onOpenAdminModal}
+                          className="px-2 py-1 rounded bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-800 font-sans font-medium text-[11px] transition-colors flex items-center gap-1 mx-auto"
+                          title="Admin only: Unlock to edit leave balances"
+                        >
+                          <Lock className="w-3 h-3 text-amber-600" />
+                          <span>Locked</span>
                         </button>
                       )}
                     </td>
