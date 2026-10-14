@@ -32,6 +32,7 @@ import { AdminAuthModal } from './components/AdminAuthModal';
 import { AppPasswordGate } from './components/AppPasswordGate';
 import { AdminPasswordSettingsModal } from './components/AdminPasswordSettingsModal';
 import { isAppAuthenticated, setAppAuthenticated } from './utils/authUtils';
+import { getISTDate } from './utils/istUtils';
 
 const MONTH_NAMES = [
   'January',
@@ -49,12 +50,15 @@ const MONTH_NAMES = [
 ];
 
 export default function App() {
+  const initialIST = getISTDate();
+
   // Gatekeeper: App Entrance Password required for anyone opening the app (default: Noc@Roster2026)
   const [isAppUnlocked, setIsAppUnlocked] = useState<boolean>(() => isAppAuthenticated());
 
-  const [year] = useState<number>(2026);
-  // Default to October 2026, or user can toggle to any month (1-12)
-  const [month, setMonth] = useState<number>(10);
+  // Indian Standard Time (IST) initial date state: starts directly with current date roster
+  const [year] = useState<number>(() => initialIST.year);
+  const [month, setMonth] = useState<number>(() => initialIST.month);
+  const [selectedDay, setSelectedDay] = useState<number>(() => initialIST.day);
   const [currentTab, setCurrentTab] = useState<ViewTab>('dashboard');
 
   // User Role State: Default to 'viewer' (Read-Only) to demonstrate viewer protection; user can click Unlock Admin
@@ -244,8 +248,11 @@ export default function App() {
       <>
         <AppPasswordGate
           onUnlockSuccess={() => {
+            const istNow = getISTDate();
+            setMonth(istNow.month);
+            setSelectedDay(istNow.day);
             setIsAppUnlocked(true);
-            showToast('Access granted: Welcome to Kaseya NOC Portal.');
+            showToast(`Access granted: Loaded today's roster for ${istNow.formattedDate} (Indian Standard Time).`);
           }}
         />
         {toastMessage && (
@@ -267,7 +274,21 @@ export default function App() {
         onOpenLogModal={() => handleOpenAddModal()}
         year={year}
         month={month}
-        onMonthChange={setMonth}
+        onMonthChange={(m) => {
+          setMonth(m);
+          const istNow = getISTDate();
+          if (m === istNow.month) {
+            setSelectedDay(istNow.day);
+          } else {
+            setSelectedDay(1);
+          }
+        }}
+        onJumpToToday={() => {
+          const istNow = getISTDate();
+          setMonth(istNow.month);
+          setSelectedDay(istNow.day);
+          showToast(`Jumped to today: ${istNow.formattedDate} (IST)`);
+        }}
         onOpenImportModal={() => {
           if (userRole === 'viewer') {
             setIsAdminModalOpen(true);
@@ -308,6 +329,8 @@ export default function App() {
             onMonthChange={setMonth}
             userRole={userRole}
             onOpenAdminModal={() => setIsAdminModalOpen(true)}
+            selectedDay={selectedDay}
+            onSelectDay={setSelectedDay}
           />
         )}
 

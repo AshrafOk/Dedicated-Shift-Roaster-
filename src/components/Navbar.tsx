@@ -15,6 +15,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { KaseyaLogo } from './KaseyaLogo';
+import { useISTClock } from '../utils/istUtils';
 
 interface NavbarProps {
   currentTab: ViewTab;
@@ -23,6 +24,7 @@ interface NavbarProps {
   year: number;
   month: number;
   onMonthChange: (month: number) => void;
+  onJumpToToday?: () => void;
   onOpenImportModal: () => void;
   onExportMasterCsv: () => void;
   userRole: UserRole;
@@ -53,6 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   year,
   month,
   onMonthChange,
+  onJumpToToday,
   onOpenImportModal,
   onExportMasterCsv,
   userRole,
@@ -60,6 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPasswordSettings,
   onLockApp,
 }) => {
+  const ist = useISTClock();
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -185,6 +189,32 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
+            {/* Live Indian Standard Time (IST) Clock & Date Badge */}
+            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/80 border border-blue-200/70 text-xs shadow-2xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" title="Live IST Synchronization Active" />
+              <span className="font-bold text-blue-950">🇮🇳 IST:</span>
+              <span className="text-blue-900 font-semibold">{ist.formattedDate}</span>
+              <span className="text-slate-300">|</span>
+              <span className="text-blue-700 font-bold tabular-nums">{ist.formattedTime}</span>
+            </div>
+
+            {/* Today (IST) Quick Jump Button */}
+            <button
+              onClick={() => {
+                onMonthChange(ist.month);
+                if (onJumpToToday) onJumpToToday();
+              }}
+              className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer shadow-2xs ${
+                month === ist.month
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-blue-700 hover:bg-blue-50 border-blue-200'
+              }`}
+              title={`Jump to Today's Current Date Roster: ${ist.formattedDate} (IST)`}
+            >
+              <Clock className="w-3 h-3" />
+              <span>Today (IST)</span>
+            </button>
+
             {/* 2026 Month Picker */}
             <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
               <select
@@ -195,7 +225,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 {MONTH_OPTIONS.map((m) => (
                   <option key={m.val} value={m.val}>
-                    {m.label} 2026
+                    {m.label} 2026 {m.val === ist.month ? '• (Current IST)' : ''}
                   </option>
                 ))}
               </select>

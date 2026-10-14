@@ -13,6 +13,7 @@ import {
   isWeekend,
   getCellColorStyles,
 } from '../utils/rosterUtils';
+import { getISTDate } from '../utils/istUtils';
 import {
   X,
   User,
@@ -297,6 +298,8 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                 const val = rosterRow?.days[day] || rosterRow?.defaultShift || '23';
                 const style = getCellColorStyles(val);
                 const weekend = isWeekend(year, month, day);
+                const ist = getISTDate();
+                const isToday = year === ist.year && month === ist.month && day === ist.day;
 
                 return (
                   <div
@@ -309,23 +312,29 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
                       setSelectedDayToEdit(day);
                     }}
                     className={`p-2 min-h-[60px] rounded-lg border transition-all flex flex-col justify-between ${
+                      isToday
+                        ? 'ring-2 ring-blue-500 border-blue-400 bg-blue-50/70 shadow-2xs'
+                        : weekend && !style.isLeave && val !== 'W'
+                        ? 'bg-blue-50/40 border-blue-200'
+                        : 'bg-white border-slate-200'
+                    } ${
                       userRole === 'admin'
                         ? 'cursor-pointer hover:shadow-xs hover:border-indigo-400'
                         : 'cursor-not-allowed hover:bg-amber-50/50'
-                    } ${
-                      weekend && !style.isLeave && val !== 'W'
-                        ? 'bg-blue-50/40 border-blue-200'
-                        : 'bg-white border-slate-200'
                     }`}
                     title={
                       userRole === 'admin'
-                        ? `Click to edit Day ${day}`
+                        ? `Click to edit Day ${day}${isToday ? ' (TODAY IST)' : ''}`
                         : `Day ${day}: ${val} (Read-Only · Admin required to edit)`
                     }
                   >
                     <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
-                      <span>{day}</span>
-                      {weekend && <span className="text-[9px] text-blue-600 font-bold">W/E</span>}
+                      <span className={isToday ? 'font-bold text-blue-900 font-sans' : ''}>{day}</span>
+                      {isToday ? (
+                        <span className="text-[8px] bg-blue-600 text-white font-sans font-bold px-1 rounded-[2px]">TODAY</span>
+                      ) : weekend ? (
+                        <span className="text-[9px] text-blue-600 font-bold">W/E</span>
+                      ) : null}
                     </div>
 
                     <div

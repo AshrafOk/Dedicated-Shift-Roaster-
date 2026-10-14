@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   CellValue,
   EmployeeRosterRow,
@@ -17,6 +17,7 @@ import {
   getCellColorStyles,
   exportRosterToCSV,
 } from '../utils/rosterUtils';
+import { useISTClock } from '../utils/istUtils';
 import {
   Search,
   Download,
@@ -58,6 +59,9 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
   userRole = 'admin',
   onOpenAdminModal,
 }) => {
+  const ist = useISTClock();
+  const isCurrentMonth = year === ist.year && month === ist.month;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [shiftFilter, setShiftFilter] = useState<string>('all');
   const [editingCell, setEditingCell] = useState<{
@@ -68,6 +72,22 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
   } | null>(null);
 
   const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
+
+  const scrollToToday = useCallback(() => {
+    if (isCurrentMonth) {
+      const todayEl = document.getElementById(`roster-col-header-${ist.day}`);
+      if (todayEl) {
+        todayEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [isCurrentMonth, ist.day]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToToday();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [month, year, scrollToToday]);
 
   // Filtered rows
   const filteredRows = useMemo(() => {
@@ -233,6 +253,17 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
 
             {/* Quick Actions */}
             <div className="flex items-center gap-2">
+              {isCurrentMonth && (
+                <button
+                  onClick={scrollToToday}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-lg transition-all shadow-xs whitespace-nowrap cursor-pointer"
+                  title={`Scroll immediately to Today's column: Day ${ist.day} ${ist.monthNameShort} (IST)`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-blue-200" />
+                  <span>Jump to Today ({ist.day} {ist.monthNameShort})</span>
+                </button>
+              )}
+
               <button
                 onClick={userRole === 'admin' ? () => exportRosterToCSV(year, month, monthName, rows) : onOpenAdminModal}
                 disabled={userRole !== 'admin'}
@@ -327,19 +358,31 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
                   const dayName = getDayOfWeekName(year, month, day);
                   const weekend = isWeekend(year, month, day);
+                  const isToday = isCurrentMonth && day === ist.day;
+
                   return (
                     <th
                       key={day}
-                      className={`px-2 py-1.5 text-center font-bold border-r border-slate-200 min-w-[42px] max-w-[42px] ${
-                        weekend ? 'bg-blue-50/80 text-blue-900' : 'bg-slate-100 text-slate-700'
+                      id={`roster-col-header-${day}`}
+                      className={`px-1.5 py-1.5 text-center font-bold border-r border-slate-200 min-w-[46px] max-w-[46px] transition-colors relative ${
+                        isToday
+                          ? 'bg-blue-600 text-white ring-2 ring-blue-500 shadow-sm z-30'
+                          : weekend
+                          ? 'bg-blue-50/80 text-blue-900'
+                          : 'bg-slate-100 text-slate-700'
                       }`}
                     >
-                      <div className="text-[10px] uppercase font-mono text-slate-500">
+                      <div className={`text-[10px] uppercase font-mono ${isToday ? 'text-blue-100 font-extrabold' : 'text-slate-500'}`}>
                         {dayName}
                       </div>
-                      <div className="text-xs font-mono font-bold tabular-nums">
+                      <div className={`text-xs font-mono font-bold tabular-nums ${isToday ? 'text-white text-sm' : ''}`}>
                         {day}
                       </div>
+                      {isToday && (
+                        <div className="text-[8px] bg-white text-blue-700 font-sans font-black px-1 rounded-[3px] mt-0.5 tracking-tighter shadow-2xs">
+                          TODAY
+                        </div>
+                      )}
                     </th>
                   );
                 })}
@@ -371,26 +414,31 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
                       const val = row.days[day] || '';
                       const style = getCellColorStyles(val);
                       const weekend = isWeekend(year, month, day);
+                      const isToday = isCurrentMonth && day === ist.day;
 
                       return (
                         <td
                           key={day}
                           onClick={() => handleCellClick(row.empId, day, val, row.name)}
-                          className={`px-1 py-1.5 text-center border-r border-slate-200 select-none transition-all ${
+                          className={`px-1 py-1.5 text-center border-r border-slate-200 select-none transition-all relative ${
+                            isToday ? 'bg-blue-50/70 border-x-2 border-blue-400/80 font-bold' : ''
+                          } ${
                             userRole === 'viewer'
                               ? 'cursor-not-allowed hover:bg-amber-100/50'
                               : 'cursor-pointer hover:ring-2 hover:ring-blue-500 hover:z-10'
                           } ${
-                            weekend && !style.isLeave && val !== 'W' ? 'bg-blue-50/30' : ''
+                            weekend && !style.isLeave && val !== 'W' && !isToday ? 'bg-blue-50/30' : ''
                           }`}
                           title={
                             userRole === 'viewer'
-                              ? `${row.name} · Day ${day}: ${style.label || val} (Read-Only · Admin required to edit)`
-                              : `${row.name} · Day ${day} (${getDayOfWeekName(year, month, day)}): ${style.label || val} · Click to edit`
+                              ? `${row.name} · Day ${day}${isToday ? ' (TODAY)' : ''}: ${style.label || val} (Read-Only · Admin required to edit)`
+                              : `${row.name} · Day ${day} (${getDayOfWeekName(year, month, day)})${isToday ? ' ★ TODAY' : ''}: ${style.label || val} · Click to edit`
                           }
                         >
                           <div
-                            className={`w-full py-1 text-[11px] font-bold rounded flex items-center justify-center ${style.bg} ${style.text}`}
+                            className={`w-full py-1 text-[11px] font-bold rounded flex items-center justify-center ${style.bg} ${style.text} ${
+                              isToday ? 'ring-1 ring-blue-500/40' : ''
+                            }`}
                           >
                             {val}
                           </div>

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Lock, ShieldCheck, KeyRound, Eye, EyeOff, AlertCircle, ArrowRight, ShieldAlert, Sparkles, Building2 } from 'lucide-react';
+import { Lock, ShieldCheck, KeyRound, Eye, EyeOff, AlertCircle, ArrowRight, ShieldAlert, Sparkles, Building2, Clock } from 'lucide-react';
 import { verifyAppPassword, setAppAuthenticated } from '../utils/authUtils';
+import { useISTClock } from '../utils/istUtils';
 
 interface AppPasswordGateProps {
   onUnlockSuccess: () => void;
 }
 
 export const AppPasswordGate: React.FC<AppPasswordGateProps> = ({ onUnlockSuccess }) => {
+  const ist = useISTClock();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,13 +79,18 @@ export const AppPasswordGate: React.FC<AppPasswordGateProps> = ({ onUnlockSucces
             </div>
           </div>
 
-          {/* Heading */}
-          <div className="text-center space-y-1.5 mb-6">
+          {/* Heading & Live IST Badge */}
+          <div className="text-center space-y-2 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/40 border border-blue-500/30 text-xs text-blue-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-semibold text-white">IST:</span>
+              <span className="font-mono text-blue-200">{ist.formattedDate} • {ist.formattedTime}</span>
+            </div>
             <h2 className="text-xl font-extrabold text-white tracking-tight">
               Sign In to Enter Portal
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-              This application is restricted to authorized operations personnel. Enter the App Password to access the 2026 NOC Roster.
+              This application operates on Indian Standard Time (IST). Logging in automatically loads today's roster ({ist.formattedDate}).
             </p>
           </div>
 

@@ -42,6 +42,7 @@ import {
   FileText,
   Lock,
 } from 'lucide-react';
+import { useISTClock } from '../utils/istUtils';
 
 interface DashboardViewProps {
   balances: EmployeeLeaveBalance[];
@@ -56,6 +57,8 @@ interface DashboardViewProps {
   onMonthChange?: (month: number) => void;
   userRole?: UserRole;
   onOpenAdminModal?: () => void;
+  selectedDay?: number;
+  onSelectDay?: (day: number) => void;
 }
 
 const MONTH_NAMES_SHORT = [
@@ -86,10 +89,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onMonthChange,
   userRole = 'viewer',
   onOpenAdminModal,
+  selectedDay: propSelectedDay,
+  onSelectDay,
 }) => {
+  const ist = useISTClock();
   const daysInMonth = getDaysInMonth(year, month);
-  const [selectedDay, setSelectedDay] = useState<number>(1);
+  const isCurrentMonth = year === ist.year && month === ist.month;
+  const defaultDay = isCurrentMonth ? Math.min(ist.day, daysInMonth) : 1;
+
+  const [internalSelectedDay, setInternalSelectedDay] = useState<number>(() => defaultDay);
+  const selectedDay = propSelectedDay !== undefined ? propSelectedDay : internalSelectedDay;
+  const handleSelectDay = (day: number) => {
+    if (onSelectDay) {
+      onSelectDay(day);
+    } else {
+      setInternalSelectedDay(day);
+    }
+  };
   const effectiveDay = Math.min(selectedDay, daysInMonth);
+  const isToday = isCurrentMonth && effectiveDay === ist.day;
 
   // Modal State for viewing employees on duty, on leave, or week off
   const [staffingModalTab, setStaffingModalTab] = useState<'duty' | 'leave' | 'week_off' | 'all' | null>(null);
@@ -290,14 +308,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-blue-800/80 text-blue-200 border border-blue-700/60 backdrop-blur-md shadow-xs">
                 <Sparkles className="w-3.5 h-3.5 text-blue-300" />
                 Kaseya NOC Dedicated Team
               </span>
-              <span className="text-xs text-blue-300 font-mono">
-                {monthName} {year} Overview
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-950/70 text-emerald-300 border border-emerald-500/40 backdrop-blur-md shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                🇮🇳 IST: {ist.formattedDateTime}
               </span>
+              {isToday && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/30 text-blue-200 border border-blue-400/40">
+                  ★ Active: Today's Live Roster (Day {effectiveDay})
+                </span>
+              )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Shift Attendance &amp; Leave Dashboard
@@ -309,21 +333,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* Quick Date Selector Pill */}
           <div className="flex flex-wrap items-center gap-3">
+            {isCurrentMonth && effectiveDay !== ist.day && (
+              <button
+                onClick={() => handleSelectDay(ist.day)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md cursor-pointer animate-pulse"
+                title={`Jump back to Today's Indian Standard Date: Day ${ist.day} ${ist.monthNameShort}`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Jump to Today ({ist.day} {ist.monthNameShort})</span>
+              </button>
+            )}
+
             <div className="flex items-center bg-white/10 border border-white/20 rounded-xl p-1.5 backdrop-blur-md shadow-inner text-sm">
-              <span className="px-2.5 py-1 text-xs font-bold text-blue-200 uppercase tracking-wider">
+              <span className="px-2.5 py-1 text-xs font-bold text-blue-200 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-blue-300" />
                 Inspect Day:
               </span>
               <select
                 value={effectiveDay}
-                onChange={(e) => setSelectedDay(Number(e.target.value))}
+                onChange={(e) => handleSelectDay(Number(e.target.value))}
                 aria-label="Select day of month for duty roster"
-                className="px-2.5 py-1 text-xs font-bold text-white bg-blue-900/90 rounded-lg border border-blue-700/60 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer tabular-nums"
+                className="px-2.5 py-1 text-xs font-bold text-white bg-blue-900/90 rounded-lg border border-blue-700/60 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer tabular-nums font-mono"
               >
-                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
-                  <option key={d} value={d} className="bg-slate-900 text-white">
-                    {monthName} {d}, {year} ({getDayOfWeekName(year, month, d)})
-                  </option>
-                ))}
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
+                  const isDayToday = isCurrentMonth && d === ist.day;
+                  return (
+                    <option key={d} value={d} className="bg-slate-900 text-white font-mono">
+                      {monthName} {d}, {year} ({getDayOfWeekName(year, month, d)}) {isDayToday ? '★ TODAY (IST)' : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -577,8 +616,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     {activeStaffingTab === 'week_off' && `Scheduled Week Off Rest Days (${weekOffSelectedDay.length})`}
                     {activeStaffingTab === 'all' && `All Dedicated Team Resources (${totalEmployees})`}
                   </span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-lg font-mono font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                    Day {effectiveDay} ({selectedDayName}) · {monthName} {year}
+                  <span className={`text-xs px-2.5 py-0.5 rounded-lg font-mono font-bold border inline-flex items-center gap-1.5 ${
+                    isToday
+                      ? 'bg-emerald-50 text-emerald-900 border-emerald-300 shadow-2xs'
+                      : 'bg-blue-50 text-blue-800 border-blue-200'
+                  }`}>
+                    {isToday && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                    <span>Day {effectiveDay} ({selectedDayName}) · {monthName} {year}</span>
+                    {isToday && <span className="text-[10px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-sans font-bold">TODAY (IST)</span>}
                   </span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1531,7 +1576,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex items-center bg-white/10 rounded-lg p-0.5 border border-white/20">
                   <button
-                    onClick={() => setSelectedDay(Math.max(1, effectiveDay - 1))}
+                    onClick={() => handleSelectDay(Math.max(1, effectiveDay - 1))}
                     disabled={effectiveDay <= 1}
                     className="p-1 hover:bg-white/20 text-white rounded disabled:opacity-30 disabled:hover:bg-transparent"
                     title="Previous day"
@@ -1542,7 +1587,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     Day {effectiveDay}
                   </span>
                   <button
-                    onClick={() => setSelectedDay(Math.min(daysInMonth, effectiveDay + 1))}
+                    onClick={() => handleSelectDay(Math.min(daysInMonth, effectiveDay + 1))}
                     disabled={effectiveDay >= daysInMonth}
                     className="p-1 hover:bg-white/20 text-white rounded disabled:opacity-30 disabled:hover:bg-transparent"
                     title="Next day"

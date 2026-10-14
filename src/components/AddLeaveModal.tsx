@@ -7,6 +7,7 @@ import {
 } from '../types/roster';
 import { LEAVE_DEFINITIONS, SHIFT_DEFINITIONS } from '../data/initialData';
 import { getDaysInMonth } from '../utils/rosterUtils';
+import { getISTDate } from '../utils/istUtils';
 import { X, Calendar, User, Clock, Check } from 'lucide-react';
 
 interface AddLeaveModalProps {
@@ -35,16 +36,20 @@ export const AddLeaveModal: React.FC<AddLeaveModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const ist = getISTDate();
+  const daysInMonth = getDaysInMonth(year, month);
+  const isCurrentMonth = year === ist.year && month === ist.month;
+  const initialDay = isCurrentMonth ? Math.min(ist.day, daysInMonth) : 1;
+
   const [empId, setEmpId] = useState<string>(preSelectedEmpId || employees[0]?.empId || '');
   const [entryType, setEntryType] = useState<'leave' | 'shift' | 'week_off'>('leave');
   const [leaveCode, setLeaveCode] = useState<LeaveCode>('PL');
   const [shiftCode, setShiftCode] = useState<ShiftCode>('23');
-  const [startDay, setStartDay] = useState<number>(1);
-  const [endDay, setEndDay] = useState<number>(1);
+  const [startDay, setStartDay] = useState<number>(initialDay);
+  const [endDay, setEndDay] = useState<number>(initialDay);
   const [updateQuota, setUpdateQuota] = useState<boolean>(true);
   const [reason, setReason] = useState<string>('');
 
-  const daysInMonth = getDaysInMonth(year, month);
   const selectedEmployee = employees.find((e) => e.empId === empId);
 
   const handleSubmit = (e: React.FormEvent) => {
