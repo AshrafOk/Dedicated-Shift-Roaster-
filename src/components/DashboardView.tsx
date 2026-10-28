@@ -59,6 +59,7 @@ interface DashboardViewProps {
   onOpenAdminModal?: () => void;
   selectedDay?: number;
   onSelectDay?: (day: number) => void;
+  teamName?: string;
 }
 
 const MONTH_NAMES_SHORT = [
@@ -91,6 +92,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenAdminModal,
   selectedDay: propSelectedDay,
   onSelectDay,
+  teamName,
 }) => {
   const ist = useISTClock();
   const daysInMonth = getDaysInMonth(year, month);
@@ -311,7 +313,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-blue-800/80 text-blue-200 border border-blue-700/60 backdrop-blur-md shadow-xs">
                 <Sparkles className="w-3.5 h-3.5 text-blue-300" />
-                Kaseya NOC Dedicated Team
+                Kaseya NOC {teamName || 'Dedicated Team'}
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-950/70 text-emerald-300 border border-emerald-500/40 backdrop-blur-md shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />

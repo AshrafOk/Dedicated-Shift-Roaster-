@@ -7,8 +7,8 @@ import {
   Lock,
   Calendar,
   FileSpreadsheet,
+  ShieldCheck,
 } from 'lucide-react';
-import { UserRole } from '../types/roster';
 import { useISTClock } from '../utils/istUtils';
 
 interface PageActionBarProps {
@@ -19,8 +19,8 @@ interface PageActionBarProps {
   onOpenImportModal: () => void;
   onExportMasterCsv: () => void;
   onOpenLogModal: () => void;
-  userRole: UserRole;
-  onOpenAdminModal: () => void;
+  canEdit: boolean;
+  onPermissionDenied?: (reason: string) => void;
   onUndoImport?: () => void;
   hasUndoBackup?: boolean;
 }
@@ -48,13 +48,22 @@ export const PageActionBar: React.FC<PageActionBarProps> = ({
   onOpenImportModal,
   onExportMasterCsv,
   onOpenLogModal,
-  userRole,
-  onOpenAdminModal,
+  canEdit,
+  onPermissionDenied,
   onUndoImport,
   hasUndoBackup,
 }) => {
   const ist = useISTClock();
   const isCurrentMonth = month === ist.month;
+
+  const handleRestrictedAction = (actionName: string) => {
+    if (!canEdit) {
+      if (onPermissionDenied) {
+        onPermissionDenied(`Permission Denied: Admin rights required to ${actionName}. Your account is in View-Only mode for this team.`);
+      }
+      return;
+    }
+  };
 
   return (
     <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xs p-3 sm:p-4 mb-6">
@@ -106,20 +115,12 @@ export const PageActionBar: React.FC<PageActionBarProps> = ({
 
         {/* Right Section: Roster Operational Controls (Import, Undo, Export DB, Log Leave/Shift) */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-          {/* Undo button if a backup exists */}
-          {hasUndoBackup && onUndoImport && (
+          {/* Undo button if a backup exists and user is admin */}
+          {hasUndoBackup && onUndoImport && canEdit && (
             <button
-              onClick={userRole === 'admin' ? onUndoImport : onOpenAdminModal}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer active:scale-98 shadow-2xs ${
-                userRole === 'admin'
-                  ? 'text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300'
-                  : 'text-slate-500 bg-slate-100/80 border border-slate-200 hover:border-amber-400'
-              }`}
-              title={
-                userRole === 'admin'
-                  ? 'Revert to previous database state before last import'
-                  : 'Admin only: Unlock to revert database'
-              }
+              onClick={onUndoImport}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer active:scale-98 shadow-2xs text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300"
+              title="Revert to previous database state before last import"
             >
               <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
               <span>Undo Last Import</span>
@@ -128,75 +129,69 @@ export const PageActionBar: React.FC<PageActionBarProps> = ({
 
           {/* Import Excel / CSV Button */}
           <button
-            onClick={userRole === 'admin' ? onOpenImportModal : onOpenAdminModal}
-            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap cursor-pointer active:scale-98 shadow-2xs ${
-              userRole === 'admin'
-                ? 'text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-300 hover:border-blue-400'
-                : 'text-slate-500 bg-slate-100/80 border border-slate-200 hover:border-amber-400'
+            onClick={() => {
+              if (canEdit) {
+                onOpenImportModal();
+              } else {
+                handleRestrictedAction('import roster files');
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-2xs ${
+              canEdit
+                ? 'text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-300 hover:border-blue-400 cursor-pointer active:scale-98'
+                : 'text-slate-500 bg-slate-100/80 border border-slate-200 hover:border-amber-400 cursor-not-allowed'
             }`}
             title={
-              userRole === 'admin'
-                ? 'Import & sync Excel (.xlsx, .xls) or CSV roster file for any month'
-                : 'Admin only: Unlock to import roster file'
+              canEdit
+                ? 'Import & sync Excel (.xlsx, .xls) or CSV roster file for this team'
+                : 'View Only: Admin access required to import roster for this team'
             }
           >
-            {userRole === 'admin' ? (
+            {canEdit ? (
               <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600" />
             ) : (
               <Lock className="w-3.5 h-3.5 text-amber-600" />
             )}
             <span>Import Excel / CSV</span>
-            {userRole !== 'admin' && (
+            {!canEdit && (
               <span className="text-[10px] bg-slate-200 text-slate-600 px-1 py-0.2 rounded font-mono font-medium">
-                Admin
+                Admin Only
               </span>
             )}
           </button>
 
           {/* Export DB Button */}
           <button
-            onClick={userRole === 'admin' ? onExportMasterCsv : onOpenAdminModal}
-            disabled={userRole !== 'admin'}
-            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-2xs ${
-              userRole === 'admin'
-                ? 'text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-300 cursor-pointer active:scale-98'
-                : 'text-slate-400 bg-slate-100/70 border border-slate-200 cursor-not-allowed opacity-60'
-            }`}
-            title={
-              userRole === 'admin'
-                ? 'Export complete 2026 database CSV'
-                : 'Export DB is disabled in Read-Only mode. Admin access required.'
-            }
+            onClick={onExportMasterCsv}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap shadow-2xs text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-300 cursor-pointer active:scale-98"
+            title="Export complete 2026 database CSV for this team"
           >
-            {userRole === 'admin' ? (
-              <Download className="w-3.5 h-3.5 text-slate-600" />
-            ) : (
-              <Lock className="w-3.5 h-3.5 text-amber-600" />
-            )}
+            <Download className="w-3.5 h-3.5 text-slate-600" />
             <span>Export DB</span>
-            {userRole !== 'admin' && (
-              <span className="text-[10px] bg-slate-200 text-slate-600 px-1 py-0.2 rounded font-mono font-medium">
-                Admin
-              </span>
-            )}
           </button>
 
           {/* Log Leave or Assign Shift Primary Button */}
           <button
-            onClick={userRole === 'admin' ? onOpenLogModal : onOpenAdminModal}
-            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-md active:scale-98 whitespace-nowrap cursor-pointer ${
-              userRole === 'admin'
-                ? 'text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-blue-500/20'
-                : 'text-slate-800 bg-amber-50 hover:bg-amber-100 border border-amber-300'
+            onClick={() => {
+              if (canEdit) {
+                onOpenLogModal();
+              } else {
+                handleRestrictedAction('log leaves or assign shifts');
+              }
+            }}
+            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-md whitespace-nowrap ${
+              canEdit
+                ? 'text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-blue-500/20 cursor-pointer active:scale-98'
+                : 'text-slate-600 bg-slate-100 border border-slate-300 cursor-not-allowed opacity-80'
             }`}
-            title={userRole === 'admin' ? 'Log Leave or Assign Shift' : 'Admin only: Unlock to edit roster'}
+            title={canEdit ? 'Log Leave or Assign Shift' : 'View-Only Mode: Admin access required to edit roster'}
           >
-            {userRole === 'admin' ? (
+            {canEdit ? (
               <Plus className="w-4 h-4 text-white" />
             ) : (
-              <Lock className="w-3.5 h-3.5 text-amber-700" />
+              <Lock className="w-3.5 h-3.5 text-slate-500" />
             )}
-            <span>{userRole === 'admin' ? '+ Log Leave / Shift' : 'Unlock to Edit'}</span>
+            <span>{canEdit ? '+ Log Leave / Shift' : 'View Only (Read-Only)'}</span>
           </button>
         </div>
       </div>

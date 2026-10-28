@@ -1,5 +1,6 @@
 import React from 'react';
-import { ViewTab, UserRole } from '../types/roster';
+import { ViewTab } from '../types/roster';
+import { AppUser, isGlobalAdmin } from '../types/user';
 import {
   Calendar,
   BarChart3,
@@ -9,6 +10,8 @@ import {
   KeyRound,
   LogOut,
   Layers,
+  User,
+  Sparkles,
 } from 'lucide-react';
 import { KaseyaLogo } from './KaseyaLogo';
 import { useISTClock } from '../utils/istUtils';
@@ -17,34 +20,37 @@ interface NavbarProps {
   currentTab: ViewTab;
   onTabChange: (tab: ViewTab) => void;
   year: number;
-  userRole: UserRole;
-  onOpenAdminModal: () => void;
-  onOpenPasswordSettings?: () => void;
-  onLockApp?: () => void;
+  teamName: string;
+  currentUser: AppUser | null;
+  canEdit: boolean;
+  onLogout: () => void;
+  onOpenAdminPage?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onTabChange,
   year,
-  userRole,
-  onOpenAdminModal,
-  onOpenPasswordSettings,
-  onLockApp,
+  teamName,
+  currentUser,
+  canEdit,
+  onLogout,
+  onOpenAdminPage,
 }) => {
   const ist = useISTClock();
+  const isMaster = isGlobalAdmin(currentUser);
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
-          {/* Zone 1: Brand Zone with Kaseya Logo & title */}
+          {/* Zone 1: Brand Zone with Kaseya Logo & Team Title */}
           <div className="flex items-center gap-3 shrink-0">
             <KaseyaLogo size="sm" showWordmark={true} />
             <div className="h-5 w-px bg-slate-200 hidden sm:block" />
             <div className="hidden sm:flex items-baseline gap-2">
               <span className="text-sm font-bold tracking-tight text-slate-900 whitespace-nowrap">
-                NOC Dedicated Team Roster
+                NOC {teamName} Roster
               </span>
               <span className="text-xs font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 rounded font-mono tabular-nums">
                 {year}
@@ -103,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </nav>
 
-          {/* Zone 3: Security & Session Controls (Sleek, Uncrowded) */}
+          {/* Zone 3: IST Clock, User Role Badge & Logout */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             {/* Live Indian Standard Time (IST) Clock & Date Badge */}
             <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 border border-blue-200/80 text-xs shadow-2xs font-mono">
@@ -114,58 +120,41 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-blue-700 font-bold tabular-nums">{ist.formattedTime}</span>
             </div>
 
-            {/* Admin Role Status & Switcher */}
+            {/* User Identity & Role Badge */}
+            {currentUser && (
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border shadow-2xs ${
+                  isMaster
+                    ? 'bg-purple-50 text-purple-900 border-purple-300'
+                    : canEdit
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-slate-100 text-slate-700 border-slate-300'
+                }`}
+                title={`Logged in user: ${currentUser.username} | Group: ${currentUser.group} | Permission: ${currentUser.permission}`}
+              >
+                {isMaster ? (
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                ) : canEdit ? (
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                ) : (
+                  <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                )}
+                <span className="font-bold text-slate-900">{currentUser.username}</span>
+                <span className="text-[10px] opacity-80 font-mono hidden sm:inline">
+                  ({currentUser.group === 'Global Admin' ? 'Global Admin' : canEdit ? 'Admin' : 'View Only'})
+                </span>
+              </div>
+            )}
+
+            {/* Logout Button */}
             <button
-              onClick={onOpenAdminModal}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer shadow-2xs active:scale-98 ${
-                userRole === 'admin'
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                  : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-              }`}
-              title={
-                userRole === 'admin'
-                  ? 'Admin Mode Active (Full Edit & Import Rights). Click to switch to Read-Only.'
-                  : 'Read-Only Mode. Click to enter Admin Password and unlock full edit rights.'
-              }
+              onClick={onLogout}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg transition-colors cursor-pointer shadow-2xs"
+              title="Logout / Lock Portal"
             >
-              {userRole === 'admin' ? (
-                <>
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Admin Mode</span>
-                  <span className="text-[10px] text-emerald-600 font-normal">(Switch)</span>
-                </>
-              ) : (
-                <>
-                  <Lock className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Read-Only</span>
-                  <span className="text-[10px] text-amber-700 font-normal">(Unlock)</span>
-                </>
-              )}
+              <LogOut className="w-3.5 h-3.5 text-slate-500 hover:text-rose-600" />
+              <span className="hidden sm:inline">Logout</span>
             </button>
-
-            {/* Change Passwords (Admin Only) */}
-            {userRole === 'admin' && onOpenPasswordSettings && (
-              <button
-                onClick={onOpenPasswordSettings}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer shadow-2xs"
-                title="Manage App Entrance Password and Admin Password"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-blue-600" />
-                <span className="hidden sm:inline">Change Passwords</span>
-              </button>
-            )}
-
-            {/* Lock Portal / Logout */}
-            {onLockApp && (
-              <button
-                onClick={onLockApp}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg transition-colors cursor-pointer shadow-2xs"
-                title="Lock Portal (Requires App Password to re-enter)"
-              >
-                <LogOut className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden sm:inline">Lock Portal</span>
-              </button>
-            )}
           </div>
         </div>
 
