@@ -32,7 +32,11 @@ import {
   HelpCircle,
   Lock,
   ShieldCheck,
+  Palette,
+  Trash2,
+  UserMinus,
 } from 'lucide-react';
+import { ROSTER_ROW_COLORS, resolveRosterColor } from '../types/roster';
 
 interface RosterGridViewProps {
   year: number;
@@ -45,6 +49,10 @@ interface RosterGridViewProps {
   onMonthChange: (month: number) => void;
   userRole?: UserRole;
   onOpenAdminModal?: () => void;
+  employeeColors?: Record<string, string>;
+  onUpdateEmployeeColor?: (empId: string, colorId: string) => void;
+  onDeleteEmployeeFromRoster?: (empId: string, empName: string) => void;
+  teamName?: string;
 }
 
 export const RosterGridView: React.FC<RosterGridViewProps> = ({
@@ -58,18 +66,41 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
   onMonthChange,
   userRole = 'admin',
   onOpenAdminModal,
+  employeeColors = {},
+  onUpdateEmployeeColor,
+  onDeleteEmployeeFromRoster,
+  teamName = 'Team',
 }) => {
   const ist = useISTClock();
   const isCurrentMonth = year === ist.year && month === ist.month;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [shiftFilter, setShiftFilter] = useState<string>('all');
+  const [activeColorPicker, setActiveColorPicker] = useState<{
+    empId: string;
+    name: string;
+    top: number;
+    left: number;
+    openUpward: boolean;
+  } | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<{ empId: string; name: string } | null>(null);
   const [editingCell, setEditingCell] = useState<{
     empId: string;
     day: number;
     currentVal: CellValue;
     empName: string;
   } | null>(null);
+
+  // Close floating color picker on outside click
+  useEffect(() => {
+    const handleDocClick = () => {
+      setActiveColorPicker(null);
+    };
+    if (activeColorPicker) {
+      document.addEventListener('click', handleDocClick);
+      return () => document.removeEventListener('click', handleDocClick);
+    }
+  }, [activeColorPicker]);
 
   const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
 
@@ -392,20 +423,82 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
             {/* Body Rows */}
             <tbody className="divide-y divide-slate-200 font-mono text-xs">
               {filteredRows.map((row) => {
+                const colorObj = resolveRosterColor(employeeColors?.[row.empId]);
+
                 return (
                   <tr key={row.empId} className="hover:bg-slate-50/70 transition-colors">
                     {/* Fixed Resource Name */}
-                    <td className="sticky left-0 z-10 bg-white hover:bg-slate-50 px-3 py-1.5 border-r border-slate-200 font-sans shadow-xs whitespace-nowrap">
-                      <button
-                        onClick={() => onSelectEmployee(row.empId)}
-                        className="text-left font-semibold text-slate-900 hover:text-blue-600 transition-colors flex items-center gap-1.5 group"
-                      >
-                        <span className="truncate max-w-[140px]">{row.name}</span>
-                      </button>
+                    <td
+                      className="sticky left-0 z-10 px-3 py-1.5 border-r border-slate-200 font-sans shadow-xs whitespace-nowrap transition-colors"
+                      style={{
+                        backgroundColor: colorObj.bg,
+                        color: colorObj.text,
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-1 group/rowname">
+                        <button
+                          onClick={() => onSelectEmployee(row.empId)}
+                          className="text-left font-semibold hover:underline transition-colors flex items-center gap-1.5 min-w-0"
+                          style={{ color: colorObj.text }}
+                          title={`View ${row.name} balance & details`}
+                        >
+                          <span className="truncate max-w-[130px]">{row.name}</span>
+                        </button>
+
+                        {/* Admin-only controls: Color picker & Remove user from roster */}
+                        {userRole === 'admin' && (
+                          <div className="flex items-center gap-0.5 opacity-60 group-hover/rowname:opacity-100 transition-opacity">
+                            {/* Color Palette Popover Trigger (Opens upward on screen without cell clipping) */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const popoverHeight = 175;
+                                const shouldOpenUpward = rect.top > popoverHeight + 20;
+                                setActiveColorPicker({
+                                  empId: row.empId,
+                                  name: row.name,
+                                  top: shouldOpenUpward ? rect.top - popoverHeight : rect.bottom + 6,
+                                  left: Math.max(12, Math.min(rect.left - 20, window.innerWidth - 275)),
+                                  openUpward: shouldOpenUpward,
+                                });
+                              }}
+                              className="p-1 rounded hover:bg-black/10 transition-colors cursor-pointer"
+                              title="Change row color (Name & ID) - 6 Excel colors"
+                            >
+                              <Palette
+                                className="w-3.5 h-3.5"
+                                style={{ color: colorObj.id === 'orange' ? '#FFFFFF' : '#334155' }}
+                              />
+                            </button>
+
+                            {/* Delete Employee from Roster Button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEmployeeToDelete({ empId: row.empId, name: row.name });
+                              }}
+                              className="p-1 rounded hover:bg-red-500/20 transition-colors cursor-pointer"
+                              title={`Remove ${row.name} from roster (left organization)`}
+                            >
+                              <Trash2
+                                className="w-3.5 h-3.5 text-slate-600 hover:text-red-700"
+                                style={{ color: colorObj.id === 'orange' ? '#FFFFFF' : undefined }}
+                              />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* Fixed EMP ID */}
-                    <td className="sticky left-[180px] z-10 bg-white hover:bg-slate-50 px-2 py-1.5 border-r border-slate-200 text-center font-mono text-slate-600 text-[11px] shadow-xs tabular-nums">
+                    <td
+                      className="sticky left-[180px] z-10 px-2 py-1.5 border-r border-slate-200 text-center font-mono text-[11px] shadow-xs tabular-nums font-bold transition-colors"
+                      style={{
+                        backgroundColor: colorObj.bg,
+                        color: colorObj.text,
+                      }}
+                    >
                       {row.empId}
                     </td>
 
@@ -451,8 +544,19 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
 
               {filteredRows.length === 0 && (
                 <tr>
-                  <td colSpan={daysInMonth + 2} className="px-6 py-12 text-center text-slate-400 font-sans">
-                    No resources matched your search or shift filter.
+                  <td colSpan={daysInMonth + 2} className="px-6 py-16 text-center text-slate-500 font-sans">
+                    <div className="max-w-md mx-auto space-y-2">
+                      <div className="text-sm font-bold text-slate-800">
+                        {rows.length === 0
+                          ? `${teamName} roster database is completely cleared`
+                          : 'No resources matched your search or shift filter.'}
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        {rows.length === 0
+                          ? 'Ready for your fresh Excel/CSV database upload. Click the "Import Excel / CSV" button above to import your new file.'
+                          : 'Try clearing your search term or setting shift filter to "All".'}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -615,6 +719,128 @@ export const RosterGridView: React.FC<RosterGridViewProps> = ({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* In-App Confirmation Modal: Delete / Remove Employee from Roster (Left Organization) */}
+      {employeeToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-150 text-slate-800">
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="w-11 h-11 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <UserMinus className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Remove Employee from Roster?
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {teamName} Roster
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 mb-4 text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Resource Name:</span>
+                <span className="font-bold text-slate-900">{employeeToDelete.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Employee ID:</span>
+                <span className="font-mono font-bold text-slate-900">{employeeToDelete.empId}</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 leading-relaxed mb-5">
+              <strong>⚠️ Organization Departure:</strong> This will delete this employee's leave balance record, monthly schedules, and row highlight styling from the database. (An automatic undo snapshot is created).
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                onClick={() => setEmployeeToDelete(null)}
+                className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (onDeleteEmployeeFromRoster) {
+                    onDeleteEmployeeFromRoster(employeeToDelete.empId, employeeToDelete.name);
+                  }
+                  setEmployeeToDelete(null);
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors flex items-center gap-1.5 shadow-md active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Confirm Removal</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating 6-Color Picker Popover (Fixed coordinates, High Z-Index, opens upward/on top with zero clipping) */}
+      {activeColorPicker && (
+        <div
+          className="fixed z-[100] bg-white rounded-xl shadow-2xl border border-slate-300 p-3 w-64 text-slate-800 font-sans animate-in fade-in zoom-in-95 duration-100"
+          style={{
+            top: `${activeColorPicker.top}px`,
+            left: `${activeColorPicker.left}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-100">
+            <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <Palette className="w-3.5 h-3.5 text-blue-600" />
+              <span className="truncate max-w-[170px]">{activeColorPicker.name}</span>
+            </span>
+            <button
+              onClick={() => setActiveColorPicker(null)}
+              className="text-slate-400 hover:text-slate-700 text-xs p-1 leading-none rounded hover:bg-slate-100 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="text-[11px] font-medium text-slate-500 mb-2">
+            Change row highlight color (Name &amp; ID):
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            {ROSTER_ROW_COLORS.map((c) => {
+              const isSelected =
+                (employeeColors?.[activeColorPicker.empId] || 'white') === c.id;
+
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    if (onUpdateEmployeeColor) {
+                      onUpdateEmployeeColor(activeColorPicker.empId, c.id);
+                    }
+                    setActiveColorPicker(null);
+                  }}
+                  className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                    isSelected
+                      ? 'ring-2 ring-blue-600 ring-offset-1 font-black shadow-xs'
+                      : 'hover:scale-102 hover:shadow-2xs'
+                  }`}
+                  style={{
+                    backgroundColor: c.bg,
+                    color: c.text,
+                    borderColor: c.border,
+                  }}
+                  title={c.name}
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-full border border-black/20 shrink-0"
+                    style={{ backgroundColor: c.bg }}
+                  />
+                  <span className="truncate">{c.name}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

@@ -15,23 +15,11 @@ interface StarterMember {
   slAccum: number;
   clAccum: number;
   coEligible: number;
+  color?: string;
 }
 
 const STARTER_TEAMS: Record<Exclude<TeamId, 'dedicated'>, StarterMember[]> = {
-  elite: [
-    { name: 'Vikram Malhotra', empId: 'EL-101', department: 'NOC Elite T3', defaultShift: '1', joiningDate: '2023-03-15', plCarried: 14, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 4 },
-    { name: 'Neha Sharma', empId: 'EL-102', department: 'NOC Elite T3', defaultShift: '2', joiningDate: '2022-08-01', plCarried: 12, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 3 },
-    { name: 'Rohan Deshmukh', empId: 'EL-103', department: 'NOC Elite T3', defaultShift: '3', joiningDate: '2023-01-10', plCarried: 10, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 2 },
-    { name: 'Ananya Iyer', empId: 'EL-104', department: 'NOC Elite T3', defaultShift: '23', joiningDate: '2024-02-15', plCarried: 8, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 5 },
-    { name: 'Siddharth Rao', empId: 'EL-105', department: 'NOC Elite T3', defaultShift: '1', joiningDate: '2022-11-20', plCarried: 16, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 3 },
-    { name: 'Pooja Nair', empId: 'EL-106', department: 'NOC Elite T3', defaultShift: '2', joiningDate: '2023-06-18', plCarried: 9, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 1 },
-    { name: 'Arjun Verma', empId: 'EL-107', department: 'NOC Elite T3', defaultShift: '3', joiningDate: '2023-09-05', plCarried: 11, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 4 },
-    { name: 'Kavita Joshi', empId: 'EL-108', department: 'NOC Elite T3', defaultShift: '23', joiningDate: '2024-04-01', plCarried: 6, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 2 },
-    { name: 'Aditya Sen', empId: 'EL-109', department: 'NOC Elite T3', defaultShift: '1', joiningDate: '2023-07-22', plCarried: 13, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 3 },
-    { name: 'Meera Pillai', empId: 'EL-110', department: 'NOC Elite T3', defaultShift: '2', joiningDate: '2022-10-12', plCarried: 15, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 6 },
-    { name: 'Kunal Kapoor', empId: 'EL-111', department: 'NOC Elite T3', defaultShift: '3', joiningDate: '2024-01-08', plCarried: 7, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 2 },
-    { name: 'Tanvi Saxena', empId: 'EL-112', department: 'NOC Elite T3', defaultShift: '23', joiningDate: '2023-05-30', plCarried: 10, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 4 },
-  ],
+  elite: [],
   standard: [
     { name: 'Amitabh Sen', empId: 'ST-201', department: 'NOC Standard T2', defaultShift: '1', joiningDate: '2023-02-14', plCarried: 11, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 2 },
     { name: 'Divya Aggarwal', empId: 'ST-202', department: 'NOC Standard T2', defaultShift: '2', joiningDate: '2023-04-10', plCarried: 10, plAccum: 18, slAccum: 12, clAccum: 8, coEligible: 3 },
@@ -131,7 +119,16 @@ export function getInitialTeamDatabase(teamId: TeamId): DatabaseState {
     return parseRosterCsv(MASTER_ROSTER_CSV);
   }
 
-  const members = STARTER_TEAMS[teamId] || STARTER_TEAMS.elite;
+  if (teamId === 'elite') {
+    return {
+      version: 3,
+      balances: [],
+      dailySchedules: {},
+      employeeColors: {},
+    };
+  }
+
+  const members = STARTER_TEAMS[teamId] || STARTER_TEAMS.standard;
   const dailySchedules = generateYearSchedule(members, 2026);
 
   const balances: EmployeeLeaveBalance[] = members.map((m) => {
@@ -175,9 +172,17 @@ export function getInitialTeamDatabase(teamId: TeamId): DatabaseState {
     return calculateEmployeeBalance(rawBalance);
   });
 
+  const employeeColors: Record<string, string> = {};
+  members.forEach((m) => {
+    if (m.color) {
+      employeeColors[m.empId] = m.color;
+    }
+  });
+
   return {
     version: 3,
     balances,
     dailySchedules,
+    employeeColors,
   };
 }

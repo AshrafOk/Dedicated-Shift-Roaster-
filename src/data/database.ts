@@ -12,6 +12,8 @@ export interface DatabaseState {
   balances: EmployeeLeaveBalance[];
   // Mapping of empId -> dateKey ("YYYY-MM-DD" or "M/D/YYYY") -> cell value
   dailySchedules: Record<string, Record<string, string>>;
+  // Mapping of empId -> colorId (e.g. 'green', 'yellow', 'peach', 'blue', 'orange', 'white') or hex
+  employeeColors?: Record<string, string>;
 }
 
 const DB_STORAGE_KEY = 'kaseya_noc_database_2026_master_v3';
@@ -160,6 +162,7 @@ export function parseRosterCsv(csvText: string, mergeIntoDb?: DatabaseState): Da
     version: 3,
     balances,
     dailySchedules,
+    employeeColors: mergeIntoDb?.employeeColors ? { ...mergeIntoDb.employeeColors } : {},
   };
 }
 

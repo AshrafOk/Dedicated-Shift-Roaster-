@@ -71,3 +71,41 @@ export interface MonthRosterData {
 }
 
 export type ViewTab = 'dashboard' | 'roster' | 'balances' | 'directory';
+
+export interface RosterRowColorOption {
+  id: string;
+  name: string;
+  bg: string;
+  text: string;
+  border: string;
+}
+
+export const ROSTER_ROW_COLORS: RosterRowColorOption[] = [
+  { id: 'green', name: 'Light Green', bg: '#A9D08E', text: '#143314', border: '#8BB670' },
+  { id: 'yellow', name: 'Golden Yellow', bg: '#FFC000', text: '#3D2600', border: '#DCA400' },
+  { id: 'peach', name: 'Peach / Salmon', bg: '#F4B084', text: '#441806', border: '#DA9264' },
+  { id: 'blue', name: 'Light Blue', bg: '#B4C6E7', text: '#0F224A', border: '#95A9D2' },
+  { id: 'orange', name: 'Deep Orange', bg: '#ED7D31', text: '#FFFFFF', border: '#CD6017' },
+  { id: 'white', name: 'Default White', bg: '#FFFFFF', text: '#0F172A', border: '#E2E8F0' },
+];
+
+export function resolveRosterColor(colorKeyOrHex?: string): RosterRowColorOption {
+  if (!colorKeyOrHex) return ROSTER_ROW_COLORS[5]; // Default White
+  const found = ROSTER_ROW_COLORS.find(
+    (c) => c.id === colorKeyOrHex.toLowerCase() || c.bg.toLowerCase() === colorKeyOrHex.toLowerCase()
+  );
+  if (found) return found;
+
+  // Custom hex fallback
+  if (colorKeyOrHex.startsWith('#')) {
+    return {
+      id: 'custom',
+      name: 'Custom',
+      bg: colorKeyOrHex,
+      text: '#0F172A',
+      border: '#CBD5E1',
+    };
+  }
+
+  return ROSTER_ROW_COLORS[5]; // Default White
+}

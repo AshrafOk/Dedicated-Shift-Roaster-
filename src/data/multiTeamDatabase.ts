@@ -23,10 +23,28 @@ function getBackupStorageKey(teamId: TeamId): string {
 export function loadTeamDatabase(teamId: TeamId): DatabaseState {
   const key = getStorageKey(teamId);
   try {
+    // If Elite team wipe was requested, ensure existing storage is completely cleared to an empty roster
+    if (teamId === 'elite') {
+      const isWiped = localStorage.getItem('kaseya_noc_elite_wiped_clean_v4');
+      if (!isWiped) {
+        localStorage.setItem('kaseya_noc_elite_wiped_clean_v4', 'true');
+        const emptyDb: DatabaseState = {
+          version: 3,
+          balances: [],
+          dailySchedules: {},
+          employeeColors: {},
+        };
+        saveTeamDatabase('elite', emptyDb);
+        clearTeamBackup('elite');
+        return emptyDb;
+      }
+    }
+
     const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.version === 3 && Array.isArray(parsed.balances) && parsed.balances.length > 0) {
+      if (parsed && parsed.version === 3 && Array.isArray(parsed.balances)) {
+        parsed.employeeColors = parsed.employeeColors || {};
         return parsed;
       }
     }

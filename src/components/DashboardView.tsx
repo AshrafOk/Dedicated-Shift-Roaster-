@@ -472,7 +472,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {workingOnSelectedDay.length}
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              {((workingOnSelectedDay.length / totalEmployees) * 100).toFixed(0)}% staffing capacity on Day {effectiveDay}
+              {totalEmployees > 0 ? ((workingOnSelectedDay.length / totalEmployees) * 100).toFixed(0) : '0'}% staffing capacity on Day {effectiveDay}
             </div>
           </div>
           <div className="mt-3 pt-2.5 border-t border-emerald-100/70 flex items-center justify-between text-[11px] font-bold text-emerald-700 group-hover:text-emerald-800">
@@ -575,7 +575,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {totalAllLeavesTaken}
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              Avg {(totalAllLeavesTaken / totalEmployees).toFixed(1)} days per engineer
+              Avg {totalEmployees > 0 ? (totalAllLeavesTaken / totalEmployees).toFixed(1) : '0.0'} days per engineer
             </div>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-blue-700 group-hover:text-blue-800">
@@ -1874,7 +1874,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <tr>
                 <td className="p-2 font-bold border-r border-slate-300">On Duty (Day {effectiveDay})</td>
                 <td className="p-2 font-mono text-center font-bold border-r border-slate-300">{workingOnSelectedDay.length}</td>
-                <td className="p-2">{((workingOnSelectedDay.length / totalEmployees) * 100).toFixed(0)}% scheduled staffing capacity active on duty</td>
+                <td className="p-2">{totalEmployees > 0 ? ((workingOnSelectedDay.length / totalEmployees) * 100).toFixed(0) : '0'}% scheduled staffing capacity active on duty</td>
               </tr>
               <tr>
                 <td className="p-2 font-bold border-r border-slate-300">On Leave (Day {effectiveDay})</td>

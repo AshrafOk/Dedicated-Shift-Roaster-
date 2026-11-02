@@ -10,6 +10,7 @@ import {
   EmployeeRosterRow,
   ViewTab,
   UserRole,
+  ROSTER_ROW_COLORS,
 } from './types/roster';
 import {
   DatabaseState,
@@ -24,6 +25,7 @@ import {
   saveTeamBackup,
   getTeamBackup,
   restoreTeamBackup,
+  clearTeamBackup,
 } from './data/multiTeamDatabase';
 import { calculateEmployeeBalance } from './utils/rosterUtils';
 import { RotateCcw, Lock, ShieldAlert } from 'lucide-react';
@@ -336,6 +338,13 @@ export default function App() {
     }
   };
 
+  // 7b. Dismiss and permanently clear undo snapshot for active team
+  const handleDismissUndo = () => {
+    clearTeamBackup(activeTeamId);
+    setBackupInfo(null);
+    showToast(`Undo option dismissed and removed for ${currentTeamConfig.name}.`);
+  };
+
   // 8. Reconcile all balances
   const handleSyncAllBalances = () => {
     if (!canEdit) {
@@ -346,7 +355,62 @@ export default function App() {
     showToast(`Leave balances synchronized with 2026 attendance ledger.`);
   };
 
-  // 9. Logout
+  // 9. Update employee row color (Name & ID)
+  const handleUpdateEmployeeColor = (empId: string, colorId: string) => {
+    if (!canEdit) {
+      showToast(`Permission Denied: Only Group Admin or Global Admin can change row colors.`);
+      return;
+    }
+    const updatedColors = {
+      ...(db.employeeColors || {}),
+      [empId]: colorId,
+    };
+    const updatedDb: DatabaseState = {
+      ...db,
+      employeeColors: updatedColors,
+    };
+    setDb(updatedDb);
+    saveTeamDatabase(activeTeamId, updatedDb);
+    const colorOption = ROSTER_ROW_COLORS.find((c) => c.id === colorId);
+    showToast(`Updated row color to ${colorOption?.name || colorId} for employee ID: ${empId}`);
+  };
+
+  // 10. Delete / Remove Employee from Roster (e.g., employee left the organization)
+  const handleDeleteEmployeeFromRoster = (empId: string, empName: string) => {
+    if (!canEdit) {
+      showToast(`Permission Denied: Only Group Admin or Global Admin can remove employees from roster.`);
+      return;
+    }
+    // Create an automatic undo backup before deletion
+    saveTeamBackup(
+      activeTeamId,
+      db,
+      `Automatic snapshot before removing ${empName} (${empId})`
+    );
+    setBackupInfo(getTeamBackup(activeTeamId));
+
+    const updatedBalances = db.balances.filter((b) => b.empId !== empId);
+    const updatedSchedules = { ...db.dailySchedules };
+    delete updatedSchedules[empId];
+    const updatedColors = { ...(db.employeeColors || {}) };
+    delete updatedColors[empId];
+
+    const updatedDb: DatabaseState = {
+      ...db,
+      balances: updatedBalances,
+      dailySchedules: updatedSchedules,
+      employeeColors: updatedColors,
+    };
+
+    setDb(updatedDb);
+    saveTeamDatabase(activeTeamId, updatedDb);
+    if (selectedEmpId === empId) {
+      setSelectedEmpId(null);
+    }
+    showToast(`Removed ${empName} (EMP ID: ${empId}) from ${currentTeamConfig.name} roster. Click 'Undo' if needed.`);
+  };
+
+  // 11. Logout
   const handleLogout = () => {
     logoutUser();
     setCurrentUser(null);
@@ -451,9 +515,9 @@ export default function App() {
                   <span>Undo Last Import</span>
                 </button>
                 <button
-                  onClick={() => setBackupInfo(null)}
-                  className="text-slate-900 hover:text-black p-0.5 font-bold cursor-pointer text-sm"
-                  title="Dismiss banner"
+                  onClick={handleDismissUndo}
+                  className="text-slate-900 hover:text-black p-1 hover:bg-amber-600/30 rounded-md font-bold cursor-pointer text-sm leading-none transition-colors"
+                  title="Dismiss and remove undo option"
                 >
                   ✕
                 </button>
@@ -562,6 +626,10 @@ export default function App() {
                 onOpenAdminModal={() => {
                   showToast(`Current account: ${currentUser.username} (${userRole === 'admin' ? 'Admin' : 'View Only'})`);
                 }}
+                employeeColors={db.employeeColors || {}}
+                onUpdateEmployeeColor={handleUpdateEmployeeColor}
+                onDeleteEmployeeFromRoster={handleDeleteEmployeeFromRoster}
+                teamName={currentTeamConfig.name}
               />
             )}
 
@@ -614,6 +682,9 @@ export default function App() {
           onOpenAdminModal={() => {
             showToast(`Current account: ${currentUser.username} (${userRole === 'admin' ? 'Admin' : 'View Only'})`);
           }}
+          employeeColor={db.employeeColors?.[selectedEmployeeBalance.empId]}
+          onUpdateEmployeeColor={handleUpdateEmployeeColor}
+          onDeleteEmployee={handleDeleteEmployeeFromRoster}
         />
       )}
 

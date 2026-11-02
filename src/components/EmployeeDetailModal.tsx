@@ -25,7 +25,11 @@ import {
   CheckCircle2,
   CalendarDays,
   Lock,
+  Palette,
+  Trash2,
+  UserMinus,
 } from 'lucide-react';
+import { ROSTER_ROW_COLORS } from '../types/roster';
 
 interface EmployeeDetailModalProps {
   employee: EmployeeLeaveBalance;
@@ -38,6 +42,9 @@ interface EmployeeDetailModalProps {
   onUpdateDayCell: (empId: string, day: number, value: CellValue) => void;
   userRole?: UserRole;
   onOpenAdminModal?: () => void;
+  employeeColor?: string;
+  onUpdateEmployeeColor?: (empId: string, colorId: string) => void;
+  onDeleteEmployee?: (empId: string, empName: string) => void;
 }
 
 export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
@@ -51,8 +58,12 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
   onUpdateDayCell,
   userRole = 'viewer',
   onOpenAdminModal,
+  employeeColor,
+  onUpdateEmployeeColor,
+  onDeleteEmployee,
 }) => {
   const [selectedDayToEdit, setSelectedDayToEdit] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const daysInMonth = getDaysInMonth(year, month);
   const defaultShiftDef = SHIFT_DEFINITIONS.find((s) => s.code === rosterRow?.defaultShift);
@@ -349,15 +360,104 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Modal footer */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+        {/* Modal footer: Admin color settings and Remove Employee */}
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+          {userRole === 'admin' ? (
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                <Palette className="w-3.5 h-3.5 text-blue-600" />
+                <span>Roster Row Color:</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {ROSTER_ROW_COLORS.map((c) => {
+                  const isSelected = (employeeColor || 'white') === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => onUpdateEmployeeColor && onUpdateEmployeeColor(employee.empId, c.id)}
+                      className={`w-6 h-6 rounded-md border flex items-center justify-center transition-transform cursor-pointer ${
+                        isSelected ? 'ring-2 ring-blue-600 ring-offset-1 scale-110' : 'hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: c.bg, borderColor: c.border }}
+                      title={`${c.name} (Name & ID)`}
+                    >
+                      {isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.text }} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {onDeleteEmployee && (
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg border border-red-200 transition-colors cursor-pointer ml-auto sm:ml-2"
+                  title="Remove employee who left the organization"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Remove from Roster</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="text-xs text-slate-500 italic">
+              Roster profile view-only
+            </div>
+          )}
+
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+            className="px-4 py-2 text-xs font-semibold bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors ml-auto cursor-pointer"
           >
             Close Profile
           </button>
         </div>
+
+        {/* In-app confirmation dialog for removing employee */}
+        {confirmDelete && (
+          <div className="fixed inset-0 z-70 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-150 text-slate-800">
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="w-11 h-11 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                  <UserMinus className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Remove Employee from Roster?
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {employee.name} (EMP ID: {employee.empId})
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                Are you sure you want to remove <strong>{employee.name}</strong> from the roster? This deletes their leave records and scheduled shifts. This action can be undone via the undo button.
+              </p>
+              <div className="flex justify-end gap-2.5">
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (onDeleteEmployee) {
+                      onDeleteEmployee(employee.empId, employee.name);
+                    }
+                    setConfirmDelete(false);
+                    onClose();
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-md"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Confirm Removal</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Inline Day Changer */}
         {selectedDayToEdit !== null && (

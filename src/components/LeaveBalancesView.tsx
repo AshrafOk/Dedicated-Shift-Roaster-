@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   RefreshCw,
   Sparkles,
+  Calendar,
 } from 'lucide-react';
 
 interface LeaveBalancesViewProps {
@@ -630,6 +631,27 @@ export const LeaveBalancesView: React.FC<LeaveBalancesViewProps> = ({
                   </tr>
                 );
               })}
+              {filteredBalances.length === 0 && (
+                <tr>
+                  <td colSpan={20} className="px-6 py-14 text-center">
+                    <div className="max-w-md mx-auto space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-2">
+                        <Calendar className="w-5 h-5" />
+                      </div>
+                      <div className="text-sm font-bold text-slate-800">
+                        {balances.length === 0
+                          ? 'Leave balances database is completely cleared'
+                          : 'No employees matched your search or filters.'}
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        {balances.length === 0
+                          ? 'Ready for your fresh Excel/CSV database upload. Click the "Import Excel / CSV" button above to import your new file.'
+                          : 'Try adjusting your search criteria or resetting the filter.'}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -240,6 +240,26 @@ export const EmployeeDirectoryView: React.FC<EmployeeDirectoryViewProps> = ({
           );
         })}
       </div>
+
+      {filteredEmployees.length === 0 && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-xs">
+          <div className="max-w-md mx-auto space-y-2">
+            <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
+              <Users className="w-6 h-6" />
+            </div>
+            <div className="text-base font-bold text-slate-800">
+              {balances.length === 0
+                ? 'Directory database is completely cleared'
+                : 'No employees found'}
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              {balances.length === 0
+                ? 'Ready for your fresh Excel/CSV database upload. Click the "Import Excel / CSV" button above to populate team members.'
+                : 'Try clearing your search term or shift filter.'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
